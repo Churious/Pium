@@ -471,42 +471,37 @@ function mapEmploymentType(item: Record<string, string>): string {
   return code ?? "";
 }
 
-function parseDisplayDate(raw?: string): Date | null {
+function dateToYmdInt(raw?: string): number | null {
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
   if (digits.length < 8) return null;
-  const y = Number(digits.slice(0, 4));
-  const m = Number(digits.slice(4, 6));
-  const d = Number(digits.slice(6, 8));
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
+  const ymd = Number(digits.slice(0, 8));
+  return Number.isFinite(ymd) ? ymd : null;
 }
 
-function todayKstDate(): Date {
+function todayKstYmd(): number {
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return new Date(
-    Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()),
-  );
+  const y = kst.getUTCFullYear();
+  const m = kst.getUTCMonth() + 1;
+  const d = kst.getUTCDate();
+  return y * 10000 + m * 100 + d;
 }
 
 function isActiveJob(job: SeniorJobJson): boolean {
   const status = job.acceptanceStatus.trim();
   if (status === "마감") return false;
 
-  const end = parseDisplayDate(job.acceptanceEndDate);
-  if (end) {
-    const today = todayKstDate();
-    if (end < today) return false;
-  }
+  const endYmd = dateToYmdInt(job.acceptanceEndDate);
+  if (endYmd != null && endYmd < todayKstYmd()) return false;
 
   return status === "접수중" || status === "";
 }
 
 function sortJobsByEndDate(jobs: SeniorJobJson[]): SeniorJobJson[] {
   return [...jobs].sort((a, b) => {
-    const aEnd = parseDisplayDate(a.acceptanceEndDate)?.getTime() ?? 0;
-    const bEnd = parseDisplayDate(b.acceptanceEndDate)?.getTime() ?? 0;
+    const aEnd = dateToYmdInt(a.acceptanceEndDate) ?? 0;
+    const bEnd = dateToYmdInt(b.acceptanceEndDate) ?? 0;
     return bEnd - aEnd;
   });
 }

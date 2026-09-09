@@ -82,6 +82,12 @@ await supabase.functions.invoke('senior-jobs', body: {
 
 Supabase가 설정되지 않으면 `lib/data/sample_senior_jobs_response.json` 샘플 데이터를 사용합니다.
 
+## 데이터 특성 (앱 처리 방식)
+
+- 공공 API `getJobList`는 **마감·과거 공고**를 함께 반환합니다. 최신순 정렬도 보장되지 않습니다.
+- Edge Function은 **접수중 + 마감일이 지나지 않은 공고만** 골라 최신 마감일 순으로 반환합니다.
+- 지역(`workPlcNm`) 필터는 API 특성상 제목·기관명까지 넓게 매칭될 수 있습니다. 해당 지역에 현재 모집 중인 공고가 없으면 빈 목록이 정상입니다.
+
 ## TODO (문서 미확인 항목)
 
 - `getJobList`에 **시도/시군구 코드** 파라미터는 공식 명세에 없음 → 현재 `workPlcNm` 텍스트 사용

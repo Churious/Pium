@@ -255,18 +255,19 @@ function buildSenuriUrl(
   serviceKey: string,
   params: Record<string, string | undefined>,
 ): string {
-  const url = new URL(`${API_BASE}${path}`);
+  const base = `${API_BASE}${path}`;
+  const isPreEncoded = /%[0-9A-Fa-f]{2}/.test(serviceKey);
 
-  // 공공데이터 인증키: 인코딩/디코딩 키 모두 지원
-  if (/%[0-9A-Fa-f]{2}/.test(serviceKey)) {
-    const query = new URLSearchParams();
-    query.append("serviceKey", serviceKey);
+  // 인코딩 키는 그대로 붙이고, 디코딩 키는 searchParams로 인코딩합니다.
+  if (isPreEncoded) {
+    const parts = [`serviceKey=${serviceKey}`];
     for (const [key, value] of Object.entries(params)) {
-      if (value) query.set(key, value);
+      if (value) parts.push(`${key}=${encodeURIComponent(value)}`);
     }
-    return `${url.origin}${url.pathname}?${query.toString()}`;
+    return `${base}?${parts.join("&")}`;
   }
 
+  const url = new URL(base);
   url.searchParams.set("serviceKey", serviceKey);
   for (const [key, value] of Object.entries(params)) {
     if (value) url.searchParams.set(key, value);

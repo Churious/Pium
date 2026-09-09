@@ -55,9 +55,25 @@ class UserMessages {
   static const jobSelectAtLeastOne = '조건을 하나 이상 골라 주세요.';
   static const jobSelectRegion = '우리 동네를 선택해 주세요.';
   static const jobRegionTitle = '근무 지역 (우리 동네)';
-  static const jobRegionHint = '시·군·구를 선택해 주세요';
+  static const jobRegionHint = '시·도와 시·군·구를 선택해 주세요';
   static const jobRegionPickTitle = '근무 지역 고르기';
-  static const jobRegionPickHint = '아래 목록에서 우리 동네를 골라 주세요.';
+  static const jobRegionPickHint =
+      '지역을 검색하거나, 시·도 → 시·군·구 순서로 골라 주세요.';
+  static const jobRegionSearchHint = '지역명 검색 (예: 강남, 수원, 전주)';
+  static const jobRegionUseCurrentLocation = '현재 위치로 설정';
+  static const jobRegionLocating = '현재 위치를 확인하고 있어요...';
+  static const jobRegionSelectedLabel = '선택한 지역';
+  static const jobRegionConfirm = '선택 완료';
+  static const jobRegionSidoTitle = '시·도';
+  static const jobRegionSigunguTitle = '시·군·구';
+  static const jobRegionBackToSido = '시·도 다시 고르기';
+  static const jobRegionSearchResultTitle = '검색 결과';
+  static const jobRegionSearchEmpty =
+      '검색어와 맞는 지역을 찾지 못했어요. 다른 이름으로 검색해 보세요.';
+  static const jobRegionLoadFailed =
+      '지역 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+  static const jobRegionLocationMatchFailed =
+      '현재 위치의 지역을 확인하지 못했어요. 목록에서 직접 골라 주세요.';
   static const jobSearching = '조건에 맞는 일자리를 찾아볼게요.';
   static const jobSearchingShort =
       '잠시만 기다려 주세요. 일자리를 찾고 있어요.';

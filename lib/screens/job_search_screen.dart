@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pium/data/korean_regions.dart';
 import 'package:pium/models/senior_job.dart';
+import 'package:pium/models/work_region_selection.dart';
 import 'package:pium/services/senior_jobs_service.dart';
 import 'package:pium/services/tts_service.dart';
 import 'package:pium/theme/pium_colors.dart';
 import 'package:pium/utils/phone_launcher.dart';
 import 'package:pium/utils/user_messages.dart';
 import 'package:pium/widgets/job_listing_card.dart';
+import 'package:pium/widgets/work_region_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum _JobSearchPhase { idle, searching, done, error }
@@ -33,13 +35,14 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
   int _pageNo = 1;
   int _totalCount = 0;
   bool _hasMore = false;
-  String? _selectedRegion;
+  WorkRegionSelection? _selectedRegion;
   Timer? _voiceTimer;
 
   @override
   void initState() {
     super.initState();
     _service = widget.seniorJobsService ?? SeniorJobsService();
+    unawaited(KoreanRegionsData.ensureLoaded());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(TtsService.speak(UserMessages.jobIntro));
     });
@@ -60,7 +63,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     }
 
     if (_selected.contains(JobFilterTag.nearHome) &&
-        (_selectedRegion == null || _selectedRegion!.isEmpty)) {
+        _selectedRegion == null) {
       await TtsService.speak(UserMessages.jobSelectRegion);
       if (!mounted) return;
       _showSnack(UserMessages.jobSelectRegion);
@@ -87,7 +90,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     try {
       final result = await _service.search(
         filters: _selected,
-        selectedRegion: _selectedRegion,
+        selectedRegion: _selectedRegion?.apiValue,
         pageNo: nextPage,
         numOfRows: 10,
       );
@@ -146,7 +149,10 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
         _selected
           ..clear()
           ..addAll({JobFilterTag.morning, JobFilterTag.nearHome});
-        _selectedRegion = '강남구';
+        _selectedRegion = const WorkRegionSelection(
+          sido: '서울특별시',
+          sigungu: '강남구',
+        );
       });
       await TtsService.speak(UserMessages.jobVoiceDemoResult);
       if (mounted) await _search();
@@ -215,8 +221,8 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
               style: TextStyle(fontSize: 18, height: 1.5),
             ),
             const SizedBox(height: 16),
-            _RegionPicker(
-              selected: _selectedRegion,
+            WorkRegionPicker(
+              selection: _selectedRegion,
               enabled: _selected.contains(JobFilterTag.nearHome),
               onChanged: (value) => setState(() => _selectedRegion = value),
             ),
@@ -382,243 +388,6 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
           ],
         );
     }
-  }
-}
-
-class _RegionPicker extends StatelessWidget {
-  const _RegionPicker({
-    required this.selected,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final String? selected;
-  final bool enabled;
-  final ValueChanged<String?> onChanged;
-
-  Future<void> _openPicker(BuildContext context) async {
-    if (!enabled) return;
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _RegionPickerSheet(selected: selected),
-    );
-    if (picked != null) onChanged(picked);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final label = selected ?? UserMessages.jobRegionHint;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: enabled ? Colors.white : PiumColors.guideBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: enabled ? PiumColors.navy : Colors.grey.shade400,
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.place_outlined,
-                color: enabled ? PiumColors.navy : Colors.grey,
-                size: 26,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  UserMessages.jobRegionTitle,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: enabled ? PiumColors.navy : Colors.grey.shade700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: OutlinedButton(
-              onPressed: enabled ? () => _openPicker(context) : null,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: PiumColors.navy,
-                side: BorderSide(
-                  color: enabled ? PiumColors.navy : Colors.grey.shade400,
-                  width: 2,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: enabled
-                            ? (selected != null ? PiumColors.navy : Colors.black54)
-                            : Colors.grey,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.expand_more,
-                    size: 28,
-                    color: enabled ? PiumColors.navy : Colors.grey,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RegionPickerSheet extends StatelessWidget {
-  const _RegionPickerSheet({required this.selected});
-
-  final String? selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.45;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              UserMessages.jobRegionPickTitle,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: PiumColors.navy,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              UserMessages.jobRegionPickHint,
-              style: TextStyle(fontSize: 17, height: 1.4),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: koreanWorkRegions.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 6),
-                itemBuilder: (context, index) {
-                  final region = koreanWorkRegions[index];
-                  final isSelected = region == selected;
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => Navigator.of(context).pop(region),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? PiumColors.tilePurple
-                              : PiumColors.guideBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? PiumColors.tilePurple
-                                : PiumColors.navy,
-                            width: 2,
-                          ),
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          constraints: const BoxConstraints(minHeight: 56),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              Icon(
-                                isSelected
-                                    ? Icons.check_circle
-                                    : Icons.circle_outlined,
-                                color:
-                                    isSelected ? Colors.white : PiumColors.navy,
-                                size: 26,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                region,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : PiumColors.navy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PiumColors.navy,
-                  side: const BorderSide(color: PiumColors.navy, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '닫기',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

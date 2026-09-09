@@ -1,0 +1,1273 @@
+{
+  "regions": [
+    {
+      "sido": "서울특별시",
+      "sigungu": "강남구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "강동구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "강북구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "강서구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "관악구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "광진구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "구로구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "금천구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "노원구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "도봉구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "동대문구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "동작구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "마포구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "서대문구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "서초구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "성동구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "성북구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "송파구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "양천구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "영등포구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "용산구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "은평구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "종로구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "중구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "서울특별시",
+      "sigungu": "중랑구",
+      "shortSido": "서울"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "강서구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "금정구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "기장군",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "남구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "동구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "동래구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "부산진구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "북구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "사상구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "사하구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "서구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "수영구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "연제구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "영도구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "중구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "부산광역시",
+      "sigungu": "해운대구",
+      "shortSido": "부산"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "남구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "달서구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "달성군",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "동구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "북구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "서구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "수성구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "대구광역시",
+      "sigungu": "중구",
+      "shortSido": "대구"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "강화군",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "계양구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "남동구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "동구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "미추홀구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "부평구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "서구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "연수구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "옹진군",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "인천광역시",
+      "sigungu": "중구",
+      "shortSido": "인천"
+    },
+    {
+      "sido": "광주광역시",
+      "sigungu": "광산구",
+      "shortSido": "광주"
+    },
+    {
+      "sido": "광주광역시",
+      "sigungu": "남구",
+      "shortSido": "광주"
+    },
+    {
+      "sido": "광주광역시",
+      "sigungu": "동구",
+      "shortSido": "광주"
+    },
+    {
+      "sido": "광주광역시",
+      "sigungu": "북구",
+      "shortSido": "광주"
+    },
+    {
+      "sido": "광주광역시",
+      "sigungu": "서구",
+      "shortSido": "광주"
+    },
+    {
+      "sido": "대전광역시",
+      "sigungu": "대덕구",
+      "shortSido": "대전"
+    },
+    {
+      "sido": "대전광역시",
+      "sigungu": "동구",
+      "shortSido": "대전"
+    },
+    {
+      "sido": "대전광역시",
+      "sigungu": "서구",
+      "shortSido": "대전"
+    },
+    {
+      "sido": "대전광역시",
+      "sigungu": "유성구",
+      "shortSido": "대전"
+    },
+    {
+      "sido": "대전광역시",
+      "sigungu": "중구",
+      "shortSido": "대전"
+    },
+    {
+      "sido": "울산광역시",
+      "sigungu": "남구",
+      "shortSido": "울산"
+    },
+    {
+      "sido": "울산광역시",
+      "sigungu": "동구",
+      "shortSido": "울산"
+    },
+    {
+      "sido": "울산광역시",
+      "sigungu": "북구",
+      "shortSido": "울산"
+    },
+    {
+      "sido": "울산광역시",
+      "sigungu": "울주군",
+      "shortSido": "울산"
+    },
+    {
+      "sido": "울산광역시",
+      "sigungu": "중구",
+      "shortSido": "울산"
+    },
+    {
+      "sido": "세종특별자치시",
+      "sigungu": "세종특별자치시",
+      "shortSido": "세종"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "가평군",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "고양시 덕양구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "고양시 일산동구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "고양시 일산서구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "과천시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "광명시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "광주시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "구리시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "군포시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "김포시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "남양주시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "동두천시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "부천시 소사구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "부천시 오정구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "부천시 원미구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "성남시 분당구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "성남시 수정구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "성남시 중원구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "수원시 권선구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "수원시 영통구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "수원시 장안구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "수원시 팔달구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "시흥시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "안산시 단원구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "안산시 상록구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "안성시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "안양시 동안구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "안양시 만안구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "양주시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "여주시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "연천군",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "오산시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "용인시 기흥구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "용인시 수지구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "용인시 처인구",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "의왕시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "의정부시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "이천시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "파주시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "평택시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "포천시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "하남시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "경기도",
+      "sigungu": "화성시",
+      "shortSido": "경기"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "강릉시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "고성군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "동해시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "삼척시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "속초시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "양구군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "양양군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "영월군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "원주시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "인제군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "정선군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "철원군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "춘천시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "태백시",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "평창군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "홍천군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "화천군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "강원특별자치도",
+      "sigungu": "횡성군",
+      "shortSido": "강원"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "괴산군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "단양군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "보은군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "영동군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "옥천군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "음성군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "제천시",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "증평군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "진천군",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "청주시 상당구",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "청주시 서원구",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "청주시 청원구",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "청주시 흥덕구",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청북도",
+      "sigungu": "충주시",
+      "shortSido": "충북"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "계룡시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "공주시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "금산군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "논산시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "당진시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "보령시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "부여군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "서산시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "서천군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "아산시",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "예산군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "천안시 동남구",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "천안시 서북구",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "청양군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "태안군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "충청남도",
+      "sigungu": "홍성군",
+      "shortSido": "충남"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "고창군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "군산시",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "김제시",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "남원시",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "무주군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "부안군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "순창군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "완주군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "익산시",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "임실군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "장수군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "전주시 덕진구",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "전주시 완산구",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "정읍시",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전북특별자치도",
+      "sigungu": "진안군",
+      "shortSido": "전북"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "강진군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "고흥군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "곡성군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "광양시",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "구례군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "나주시",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "담양군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "목포시",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "무안군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "보성군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "순천시",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "신안군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "여수시",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "영광군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "영암군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "완도군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "장성군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "장흥군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "진도군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "함평군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "해남군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "전라남도",
+      "sigungu": "화순군",
+      "shortSido": "전남"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "경산시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "경주시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "고령군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "구미시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "김천시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "문경시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "봉화군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "상주시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "성주군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "안동시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "영덕군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "영양군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "영주시",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "예천군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "울릉군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "울진군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "의성군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "청도군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "청송군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "칠곡군",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "포항시 남구",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상북도",
+      "sigungu": "포항시 북구",
+      "shortSido": "경북"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "거제시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "거창군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "고성군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "김해시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "남해군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "밀양시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "사천시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "산청군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "양산시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "의령군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "진주시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창녕군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창원시 마산합포구",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창원시 마산회원구",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창원시 성산구",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창원시 의창구",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "창원시 진해구",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "통영시",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "하동군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "함안군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "함양군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "경상남도",
+      "sigungu": "합천군",
+      "shortSido": "경남"
+    },
+    {
+      "sido": "제주특별자치도",
+      "sigungu": "서귀포시",
+      "shortSido": "제주"
+    },
+    {
+      "sido": "제주특별자치도",
+      "sigungu": "제주시",
+      "shortSido": "제주"
+    }
+  ],
+  "shortSido": {
+    "서울특별시": "서울",
+    "부산광역시": "부산",
+    "대구광역시": "대구",
+    "인천광역시": "인천",
+    "광주광역시": "광주",
+    "대전광역시": "대전",
+    "울산광역시": "울산",
+    "세종특별자치시": "세종",
+    "경기도": "경기",
+    "강원특별자치도": "강원",
+    "충청북도": "충북",
+    "충청남도": "충남",
+    "전북특별자치도": "전북",
+    "전라남도": "전남",
+    "경상북도": "경북",
+    "경상남도": "경남",
+    "제주특별자치도": "제주"
+  }
+}

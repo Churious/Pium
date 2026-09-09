@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PIUM (Supabase 연결)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define=SUPABASE_URL=https://glhgqolncenyqtsyzuhz.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdsaGdxb2xuY2VueXF0c3l6dWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NDA5MTcsImV4cCI6MjEwNDUxNjkxN30.9MJZwY2JNGJyCO4JCNbq8tO2-YC9dpIkn6RcQYx3OSk"
+      ]
+    }
+  ]
+}

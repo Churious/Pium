@@ -8,9 +8,14 @@ import 'package:pium/services/location_service.dart';
 import 'package:pium/services/nearby_service.dart';
 import 'package:pium/services/tts_service.dart';
 import 'package:pium/theme/pium_colors.dart';
-import 'package:pium/utils/date_format.dart';
+import 'package:pium/theme/pium_layout.dart';
 import 'package:pium/utils/defer_state.dart';
 import 'package:pium/utils/user_messages.dart';
+import 'package:pium/widgets/home_ai_help_card.dart';
+import 'package:pium/widgets/home_all_features_button.dart';
+import 'package:pium/widgets/home_compact_header.dart';
+import 'package:pium/widgets/home_emergency_card.dart';
+import 'package:pium/widgets/home_feature_row.dart';
 import 'package:pium/widgets/nearby_results_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -77,10 +82,10 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
       await launchUrl(uri);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             UserMessages.callFailed,
-            style: const TextStyle(fontSize: 18),
+            style: TextStyle(fontSize: 18),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -196,6 +201,40 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
     }
   }
 
+  /// 전체 기능 화면이 생기면 여기에서 Navigator.push만 연결한다.
+  void _onAllFeatures() {}
+
+  List<HomeFeatureItem> get _frequentFeatures => [
+        HomeFeatureItem(
+          title: UserMessages.homeHospitalTitle,
+          subtitle: UserMessages.homeHospitalSubtitle,
+          icon: Icons.local_hospital_outlined,
+          accentColor: PiumColors.tileTeal,
+          onTap: () => _onTileTap(_HomeTileAction.hospital),
+        ),
+        HomeFeatureItem(
+          title: UserMessages.homeFamilyTitle,
+          subtitle: UserMessages.homeFamilySubtitle,
+          icon: Icons.phone_in_talk,
+          accentColor: PiumColors.tileBlue,
+          onTap: () => _onTileTap(_HomeTileAction.family),
+        ),
+        HomeFeatureItem(
+          title: UserMessages.homePracticeTitle,
+          subtitle: UserMessages.homePracticeSubtitle,
+          icon: Icons.touch_app,
+          accentColor: PiumColors.tileOrange,
+          onTap: () => _onTileTap(_HomeTileAction.kiosk),
+        ),
+        HomeFeatureItem(
+          title: UserMessages.homeJobsTitle,
+          subtitle: UserMessages.homeJobsSubtitle,
+          icon: Icons.work_outline,
+          accentColor: PiumColors.tilePurple,
+          onTap: () => _onTileTap(_HomeTileAction.jobs),
+        ),
+      ];
+
   Future<void> _confirmSos() async {
     if (!mounted) return;
     final go = await showDialog<bool>(
@@ -226,130 +265,51 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final horizontal = PiumLayout.pageHorizontal(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: PiumColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _HomeHeader(now: _now),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HomeCompactHeader(now: _now),
+              Padding(
+                padding: EdgeInsets.fromLTRB(horizontal, 8, horizontal, 28),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      flex: 2,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: _QuickCard(
-                              label: '병원/약국',
-                              icon: Icons.local_hospital_outlined,
-                              color: PiumColors.tileTeal,
-                              onTap: () =>
-                                  _onTileTap(_HomeTileAction.hospital),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _QuickCard(
-                              label: '가족 연락',
-                              icon: Icons.phone_in_talk,
-                              color: PiumColors.tileBlue,
-                              onTap: () => _onTileTap(_HomeTileAction.family),
-                            ),
-                          ),
-                        ],
+                    HomeAiHelpCard(
+                      listening: _listening,
+                      onAsk: _listening ? null : _onMic,
+                    ),
+                    const SizedBox(height: PiumLayout.sectionGap),
+                    const HomeSectionTitle(UserMessages.homeFrequentTitle),
+                    const SizedBox(height: PiumLayout.itemGap),
+                    ..._frequentFeatures.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: PiumLayout.itemGap,
+                        ),
+                        child: HomeFeatureRow(item: item),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      flex: 2,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: _QuickCard(
-                              label: '키오스크',
-                              icon: Icons.point_of_sale,
-                              color: PiumColors.tileOrange,
-                              onTap: () => _onTileTap(_HomeTileAction.kiosk),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _QuickCard(
-                              label: '119에 전화',
-                              icon: Icons.emergency_outlined,
-                              color: PiumColors.tileRed,
-                              onTap: () => _onTileTap(_HomeTileAction.sos),
-                            ),
-                          ),
-                        ],
-                      ),
+                    HomeAllFeaturesButton(onPressed: _onAllFeatures),
+                    const SizedBox(height: PiumLayout.sectionGap),
+                    const HomeSectionTitle(
+                      UserMessages.homeEmergencyTitle,
+                      color: PiumColors.tileRed,
                     ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 88,
-                      width: double.infinity,
-                      child: _QuickCard(
-                        label: '일자리 찾기',
-                        icon: Icons.work_outline,
-                        color: PiumColors.tilePurple,
-                        onTap: () => _onTileTap(_HomeTileAction.jobs),
-                      ),
+                    const SizedBox(height: PiumLayout.itemGap),
+                    HomeEmergencyCard(
+                      onTap: () => _onTileTap(_HomeTileAction.sos),
                     ),
                   ],
                 ),
               ),
-            ),
-            SizedBox(
-              height: 32,
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: _listening ? 1 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: IgnorePointer(
-                    ignoring: !_listening,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: PiumColors.guideBg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: PiumColors.navy, width: 1.5),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.hearing, color: PiumColors.navy, size: 18),
-                          SizedBox(width: 6),
-                          Text(
-                            '듣고 있어요...',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: PiumColors.navy,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-              child: _MicButton(
-                listening: _listening,
-                onPressed: _listening ? null : _onMic,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -364,165 +324,4 @@ class _AiIntent {
   const _AiIntent({required this.speech, required this.type});
   final String speech;
   final _IntentType type;
-}
-
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.now});
-  final DateTime now;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-      decoration: const BoxDecoration(
-        color: PiumColors.navy,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Text(
-            '피움',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const Spacer(),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatKoreanDate(now),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                formatKoreanTime(now),
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFFCBD5E1),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 14),
-          const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.wb_sunny, color: Color(0xFFFBBF24), size: 22),
-              SizedBox(width: 4),
-              Text(
-                '24°',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickCard extends StatelessWidget {
-  const _QuickCard({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 3,
-      shadowColor: color.withOpacity(0.35),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 32, color: Colors.white),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  height: 1.15,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MicButton extends StatelessWidget {
-  const _MicButton({required this.listening, required this.onPressed});
-
-  final bool listening;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 60,
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: listening ? PiumColors.pulseYellow : Colors.transparent,
-            width: listening ? 3 : 0,
-          ),
-        ),
-        child: FilledButton.icon(
-          onPressed: onPressed,
-          style: FilledButton.styleFrom(
-            backgroundColor: PiumColors.navy,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFF64748B),
-            minimumSize: const Size(double.infinity, 60),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 4,
-          ),
-          icon: Icon(listening ? Icons.graphic_eq : Icons.mic, size: 26),
-          label: const Text(
-            '음성 질문',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-    );
-  }
 }

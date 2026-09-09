@@ -94,7 +94,16 @@ class SeniorJobsService {
     } on SeniorJobsSearchException {
       rethrow;
     } on FunctionException catch (e) {
-      appLog('senior-jobs function error: status=${e.status} details=${e.details}');
+      final details = e.details;
+      if (details is Map && details['code'] == 'AUTH') {
+        appLog(
+          'senior-jobs auth error: 공공데이터 API 키를 확인하세요 (SENIOR_JOB_API_KEY)',
+        );
+      } else {
+        appLog(
+          'senior-jobs function error: status=${e.status} details=$details',
+        );
+      }
       throw SeniorJobsSearchException(UserMessages.jobSearchFailed, cause: e);
     } catch (e, st) {
       appLog('senior-jobs search error: $e\n$st');

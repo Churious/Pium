@@ -41,6 +41,18 @@ interface SeniorJobJson {
   otherNotes: string;
 }
 
+type UpstreamFailureKind = "auth" | "upstream" | "empty";
+
+class UpstreamError extends Error {
+  constructor(
+    message: string,
+    readonly kind: UpstreamFailureKind,
+  ) {
+    super(message);
+    this.name = "UpstreamError";
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -53,7 +65,7 @@ Deno.serve(async (req: Request) => {
     const apiKey = Deno.env.get("SENIOR_JOB_API_KEY")?.trim();
     if (!apiKey) {
       console.error("senior-jobs: SENIOR_JOB_API_KEY secret is missing");
-      return json({ error: "Server configuration error" }, 500);
+      return json({ error: "Server configuration error", code: "CONFIG" }, 500);
     }
 
     if (action === "detail") {
@@ -71,7 +83,7 @@ Deno.serve(async (req: Request) => {
     const pageNo = normalizePage(body.pageNo);
     const numOfRows = normalizePageSize(body.numOfRows);
 
-    const result = await fetchJobList(apiKey, {
+    const result = await fetchJobListWithFallback(apiKey, {
       pageNo,
       numOfRows,
       search: body.search?.trim(),
@@ -82,16 +94,83 @@ Deno.serve(async (req: Request) => {
     return json(result, 200);
   } catch (err) {
     console.error("senior-jobs: internal error", err);
-    const message = err instanceof Error ? err.message : "";
-    if (message.includes("Upstream API error")) {
-      return json({ error: "Upstream API error" }, 502);
-    }
-    if (message.includes("Upstream empty")) {
-      return json({ error: "Empty response" }, 502);
+    if (err instanceof UpstreamError) {
+      const status = err.kind === "auth" ? 401 : 502;
+      return json(
+        {
+          error: err.kind === "auth"
+            ? "Upstream API auth error"
+            : "Upstream API error",
+          code: err.kind === "auth" ? "AUTH" : "UPSTREAM",
+        },
+        status,
+      );
     }
     return json({ error: "Internal error" }, 500);
   }
 });
+
+async function fetchJobListWithFallback(
+  apiKey: string,
+  params: {
+    pageNo: number;
+    numOfRows: number;
+    search?: string;
+    emplymShp?: string;
+    workPlcNm?: string;
+  },
+): Promise<{
+  jobs: SeniorJobJson[];
+  pageNo: number;
+  numOfRows: number;
+  totalCount: number;
+}> {
+  const attempts: Array<{
+    pageNo: number;
+    numOfRows: number;
+    search?: string;
+    emplymShp?: string;
+    workPlcNm?: string;
+  }> = [params];
+
+  const hasOptionalFilters = Boolean(
+    params.search || params.emplymShp || params.workPlcNm,
+  );
+  if (hasOptionalFilters) {
+    attempts.push({
+      pageNo: params.pageNo,
+      numOfRows: params.numOfRows,
+      workPlcNm: params.workPlcNm,
+      emplymShp: params.emplymShp,
+    });
+    attempts.push({
+      pageNo: params.pageNo,
+      numOfRows: params.numOfRows,
+      workPlcNm: params.workPlcNm,
+    });
+    attempts.push({
+      pageNo: params.pageNo,
+      numOfRows: params.numOfRows,
+    });
+  }
+
+  let lastAuthError: UpstreamError | null = null;
+
+  for (const attempt of attempts) {
+    try {
+      return await fetchJobList(apiKey, attempt);
+    } catch (err) {
+      if (err instanceof UpstreamError && err.kind === "auth") {
+        lastAuthError = err;
+        break;
+      }
+      console.error("senior-jobs: list attempt failed", attempt, err);
+    }
+  }
+
+  if (lastAuthError) throw lastAuthError;
+  throw new UpstreamError("Upstream API error", "upstream");
+}
 
 async function fetchJobList(
   apiKey: string,
@@ -108,15 +187,13 @@ async function fetchJobList(
   numOfRows: number;
   totalCount: number;
 }> {
-  const url = new URL(`${API_BASE}/getJobList`);
-  url.searchParams.set("serviceKey", apiKey);
-  url.searchParams.set("pageNo", String(params.pageNo));
-  url.searchParams.set("numOfRows", String(params.numOfRows));
-  if (params.search) url.searchParams.set("search", params.search);
-  if (params.emplymShp) url.searchParams.set("emplymShp", params.emplymShp);
-  if (params.workPlcNm) url.searchParams.set("workPlcNm", params.workPlcNm);
-
-  const xml = await fetchXml(url.toString());
+  const xml = await fetchSenuriXml(apiKey, "/getJobList", {
+    pageNo: String(params.pageNo),
+    numOfRows: String(params.numOfRows),
+    search: params.search,
+    emplymShp: params.emplymShp,
+    workPlcNm: params.workPlcNm,
+  });
   assertApiSuccess(xml);
 
   const header = parseHeader(xml);
@@ -137,11 +214,7 @@ async function fetchJobDetail(
   apiKey: string,
   jobId: string,
 ): Promise<SeniorJobJson | null> {
-  const url = new URL(`${API_BASE}/getJobInfo`);
-  url.searchParams.set("serviceKey", apiKey);
-  url.searchParams.set("id", jobId);
-
-  const xml = await fetchXml(url.toString());
+  const xml = await fetchSenuriXml(apiKey, "/getJobInfo", { id: jobId });
   assertApiSuccess(xml);
 
   const items = parseItems(xml);
@@ -156,24 +229,95 @@ async function fetchJobDetail(
   return mapDetailItemToJob(items[0]);
 }
 
+function serviceKeyVariants(apiKey: string): string[] {
+  const trimmed = apiKey.trim();
+  const variants = new Set<string>([trimmed]);
+
+  try {
+    variants.add(decodeURIComponent(trimmed));
+  } catch {
+    // ignore decode errors
+  }
+
+  for (const key of [...variants]) {
+    try {
+      variants.add(encodeURIComponent(key));
+    } catch {
+      // ignore encode errors
+    }
+  }
+
+  return [...variants];
+}
+
+function buildSenuriUrl(
+  path: string,
+  serviceKey: string,
+  params: Record<string, string | undefined>,
+): string {
+  const url = new URL(`${API_BASE}${path}`);
+
+  // 공공데이터 인증키: 인코딩/디코딩 키 모두 지원
+  if (/%[0-9A-Fa-f]{2}/.test(serviceKey)) {
+    const query = new URLSearchParams();
+    query.append("serviceKey", serviceKey);
+    for (const [key, value] of Object.entries(params)) {
+      if (value) query.set(key, value);
+    }
+    return `${url.origin}${url.pathname}?${query.toString()}`;
+  }
+
+  url.searchParams.set("serviceKey", serviceKey);
+  for (const [key, value] of Object.entries(params)) {
+    if (value) url.searchParams.set(key, value);
+  }
+  return url.toString();
+}
+
+async function fetchSenuriXml(
+  apiKey: string,
+  path: string,
+  params: Record<string, string | undefined>,
+): Promise<string> {
+  const variants = serviceKeyVariants(apiKey);
+  let lastError: UpstreamError | null = null;
+
+  for (const key of variants) {
+    const url = buildSenuriUrl(path, key, params);
+    try {
+      return await fetchXml(url);
+    } catch (err) {
+      if (err instanceof UpstreamError) {
+        lastError = err;
+        if (err.kind === "auth") {
+          continue;
+        }
+      }
+      throw err;
+    }
+  }
+
+  throw lastError ?? new UpstreamError("Upstream API auth error", "auth");
+}
+
 async function fetchXml(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: { Accept: "application/xml" },
   });
   if (!res.ok) {
     console.error(`senior-jobs: upstream status=${res.status}`);
-    throw new Error(`Upstream API error: ${res.status}`);
+    throw new UpstreamError(`Upstream HTTP ${res.status}`, "upstream");
   }
   const text = await res.text();
   if (!text.trim()) {
-    throw new Error("Upstream empty response");
+    throw new UpstreamError("Upstream empty response", "empty");
   }
   if (text.includes("OpenAPI_ServiceResponse")) {
     const errMsg = extractTag(text, "returnAuthMsg") ||
       extractTag(text, "errMsg") ||
       "Auth error";
     console.error(`senior-jobs: auth error ${errMsg}`);
-    throw new Error(`Upstream API error: auth`);
+    throw new UpstreamError(`Upstream API auth error: ${errMsg}`, "auth");
   }
   return text;
 }
@@ -191,7 +335,17 @@ function assertApiSuccess(xml: string): void {
     // NODATA — 빈 목록으로 처리
     return;
   }
-  throw new Error(`Upstream API error: ${normalized}`);
+  if (normalized === "10" || normalized === "11" || normalized === "22" ||
+    normalized === "30") {
+    throw new UpstreamError(
+      `Upstream API auth error: ${resultMsg || normalized}`,
+      "auth",
+    );
+  }
+  throw new UpstreamError(
+    `Upstream API error: ${normalized}`,
+    "upstream",
+  );
 }
 
 function parseHeader(xml: string): Record<string, string> {

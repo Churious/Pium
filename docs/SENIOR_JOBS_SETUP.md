@@ -12,6 +12,23 @@ supabase link --project-ref glhgqolncenyqtsyzuhz
 supabase secrets set SENIOR_JOB_API_KEY="발급받은_공공데이터_인증키"
 ```
 
+### 인증키 주의사항
+
+- [공공데이터포털](https://www.data.go.kr/data/15015153/openapi.do)에서 **「한국노인인력개발원_100세누리구인정보」** API 사용 신청 후 발급된 키를 넣습니다.
+- **인코딩 키**·**디코딩 키** 모두 사용 가능합니다. Edge Function이 자동으로 맞춥니다.
+- 키 앞뒤 공백·따옴표가 들어가지 않도록 주의합니다.
+- 배포 후 아래로 확인합니다.
+
+```bash
+curl -sS -X POST "https://glhgqolncenyqtsyzuhz.supabase.co/functions/v1/senior-jobs" \
+  -H "Authorization: Bearer <SUPABASE_ANON_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"list","pageNo":1,"numOfRows":3}'
+```
+
+- `{"jobs":[...]}` 이 나오면 정상입니다.
+- `{"error":"Upstream API auth error","code":"AUTH"}` 이면 키가 잘못되었거나 해당 API 미신청 상태입니다.
+
 ## Edge Function 배포
 
 ```bash

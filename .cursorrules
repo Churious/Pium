@@ -1,12 +1,96 @@
 You are a senior Flutter and Mobile DevOps expert building "PIUM (피움)", an AI-assisted accessible launcher for elderly users (60+).
 
-## Project Guidelines:
-1. Target Platform: Android (optimized for Galaxy S21, Flutter SDK).
-2. UX/Accessibility Constraints:
-   - Font sizes must be minimum 18pt for body, 24pt+ for titles.
-   - Touch targets must be at least 60x60dp with high-contrast colors (WCAG AAA standard).
-   - Use simple, friendly Korean phrases suited for seniors.
-3. Code Quality:
-   - Use idiomatic, null-safe Dart and clean Flutter state management.
-   - Avoid over-engineering; keep implementations modular, lightweight, and directly runnable.
-   - Do not remove existing logic unless explicitly instructed.
+## Project Overview
+- **Target:** Android (Galaxy S21 class devices), Flutter SDK 3.x, Dart null-safe.
+- **Repo scope:** Android only — `ios/`, `web/`, `windows/`, `linux/`, `macos/` are gitignored (kept locally if needed).
+- **Backend:** Supabase (project ref `glhgqolncenyqtsyzuhz`, region `ap-northeast-2`). External API keys live in Edge Function secrets only, never in Flutter.
+
+## Architecture (`lib/`)
+```
+lib/
+├── main.dart                 # App entry, theme, Supabase init
+├── config/supabase_config.dart
+├── theme/pium_colors.dart    # PiumColors palette
+├── models/                   # nearby_place, kiosk_models, senior_job
+├── services/                 # location, nearby, senior_jobs, tts, map_launcher
+├── screens/                  # pium_home_screen, kiosk_practice_screen, job_search_screen
+├── widgets/                  # nearby_results_sheet, job_listing_card, step_highlight
+├── data/                     # demo/sample JSON, korean_regions
+└── utils/                    # user_messages, phone_launcher, defer_state, app_log, date_format
+supabase/functions/
+├── nearby/index.ts           # Kakao hospital/pharmacy (KAKAO_REST_API_KEY)
+└── senior-jobs/index.ts      # 노인 구인정보 API (SENIOR_JOB_API_KEY)
+docs/SENIOR_JOBS_SETUP.md     # Job API deploy guide
+```
+
+## Features (do not break without explicit request)
+| Home tile | Implementation |
+|-----------|----------------|
+| 병원/약국 | `NearbyResultsSheet` → `nearby` Edge Function |
+| 가족 연띙 | `tel:` via `_launchTel` |
+| 키오스크 | `KioskPracticeScreen` (연습/도전/자유 모드) |
+| 119에 전화 | Confirm dialog → `tel:119` |
+| 일자리 찾기 | `JobSearchScreen` → `senior-jobs` Edge Function |
+
+## State & Patterns
+- **StatefulWidget** only (no Riverpod/Bloc unless user asks).
+- **Services:** optional constructor injection for tests (`PiumHomeScreen(locationService:, nearbyService:, seniorJobsService:)`).
+- **Errors:** throw domain exceptions with `userMessage`; log technical details via `appLog()` only.
+- **User-facing copy:** all Korean strings in `lib/utils/user_messages.dart` — no Supabase/JWT/XML/API jargon shown to users.
+- **TTS:** `TtsService.init()` once; `TtsService.speak()` for major actions (also aliased `PiumTts`).
+- **Phone:** reuse `lib/utils/phone_launcher.dart` (`launchPhoneCall`).
+- **Navigation:** imperative (`Navigator.push`, `showModalBottomSheet`, `showDialog`) — no GoRouter.
+- **Dialogs/sheets:** use `deferState()` after pop to avoid build conflicts.
+
+## Senior UX (mandatory)
+- Body text **≥ 18pt**, titles **≥ 24pt**.
+- Touch targets **≥ 60dp** height for primary actions.
+- High contrast (`PiumColors.navy`, tile colors); do not rely on color alone — use icons + borders.
+- Simple Korean; avoid: 취업, 실전, 실력 확인, GPS, API, XML, JWT, Exception.
+- Prefer: 일자리 찾기, 천천히 살펴보기, 119에 전화, 따뜻하게/차갑게.
+- Long lists: use **bottom sheets with max height ~45%** and scroll — never full-screen dropdowns.
+
+## Kiosk (`kiosk_practice_screen.dart`, `kiosk_models.dart`)
+- Modes: **연습** (guided highlights), **도전** (validation + "맞았어요!" on success), **자유**.
+- Cart: tap menu to add; +/- only in cart; same product+options merge quantity.
+- Drinks: one americano product; **온도** (따뜻하게/차갑게) in options dialog; ice amount only when iced.
+- Payment: **card drag into reader** only — no cash/payment-method picker.
+- Missions: `randomKioskMission()` — 4 types (simple, option, multi-drink, drink+dessert).
+
+## Senior Jobs API
+- Client calls Supabase `senior-jobs` only — never `apis.data.go.kr` from Flutter.
+- List params mapped in `JobSearchQuery`: `search`, `emplymShp` (CM0103=시간제), `workPlcNm` (district name text).
+- **No sido/sigungu code** in official getJobList spec — use `workPlcNm` + `korean_regions.dart`.
+- Detail: `action: detail`, `jobId` → Edge Function calls getJobInfo with `id`.
+- Offline/dev without Supabase: falls back to `lib/data/sample_senior_jobs_response.json`.
+- TODO markers allowed for speech_to_text and GPS→region auto-detect.
+
+## Security
+- Never commit `.env`, API keys, or `supabase/.temp/`.
+- Edge Function secrets:
+  - `KAKAO_REST_API_KEY` (nearby)
+  - `SENIOR_JOB_API_KEY` (senior-jobs)
+- Set via: `supabase secrets set SENIOR_JOB_API_KEY="..."`
+
+## Dev Commands
+```powershell
+flutter pub get
+flutter analyze lib
+flutter test
+flutter run
+```
+Deploy functions (after `supabase link`):
+```powershell
+supabase functions deploy nearby
+supabase functions deploy senior-jobs
+```
+
+## Code Quality
+- Idiomatic null-safe Dart; minimal diff; no over-engineering.
+- Match existing naming, file layout, and `PiumColors` styling.
+- Do not remove existing features unless explicitly instructed.
+- Only add tests when they cover real behavior; run `flutter test` before finishing.
+
+## Commit / PR
+- Do not commit unless user asks.
+- Android-focused changes only in tracked files; do not force-add gitignored platform folders.

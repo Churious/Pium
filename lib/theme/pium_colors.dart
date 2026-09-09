@@ -9,6 +9,7 @@ class PiumColors {
   static const tileTeal = Color(0xFF0F766E);
   static const tileOrange = Color(0xFFEA580C);
   static const tileRed = Color(0xFFB91C1C);
+  static const tilePurple = Color(0xFF7C3AED);
   static const guideBg = Color(0xFFF0F4FA);
   static const pulseYellow = Color(0xFFFACC15);
   static const kioskBg = Color(0xFF111827);

@@ -294,9 +294,9 @@ class _ErrorView extends StatelessWidget {
   String get _settingsLabel {
     switch (action) {
       case LocationFailureAction.openLocationSettings:
-        return '위치(GPS) 설정 열기';
+        return '휴대폰 위치 설정 열기';
       case LocationFailureAction.openAppSettings:
-        return '앱 권한 설정 열기';
+        return '피움 설정에서 허용하기';
       case null:
         return '';
     }

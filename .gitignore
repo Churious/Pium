@@ -47,6 +47,14 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
+# Secrets — never commit API keys
+.env
+.env.*
+*.pem
+
+# Supabase CLI local state
+supabase/.temp/
+
 # PIUM: Android only — keep locally, do not commit other platforms
 /ios/
 /linux/

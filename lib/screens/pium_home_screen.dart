@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:pium/screens/job_search_screen.dart';
 import 'package:pium/screens/kiosk_practice_screen.dart';
+import 'package:pium/services/senior_jobs_service.dart';
 import 'package:pium/services/location_service.dart';
 import 'package:pium/services/nearby_service.dart';
 import 'package:pium/services/tts_service.dart';
@@ -17,10 +19,12 @@ class PiumHomeScreen extends StatefulWidget {
     super.key,
     this.locationService,
     this.nearbyService,
+    this.seniorJobsService,
   });
 
   final LocationService? locationService;
   final NearbyService? nearbyService;
+  final SeniorJobsService? seniorJobsService;
 
   @override
   State<PiumHomeScreen> createState() => _PiumHomeScreenState();
@@ -102,6 +106,17 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
     );
   }
 
+  Future<void> _openJobSearch() async {
+    await TtsService.speak(UserMessages.jobHomeOpen);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            JobSearchScreen(seniorJobsService: widget.seniorJobsService),
+      ),
+    );
+  }
+
   Future<void> _openKiosk() async {
     await TtsService.speak('실제 매장과 같은 무인 주문기 연습을 시작합니다.');
     if (!mounted) return;
@@ -176,6 +191,8 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
         _openKiosk();
       case _HomeTileAction.sos:
         _confirmSos();
+      case _HomeTileAction.jobs:
+        _openJobSearch();
     }
   }
 
@@ -184,7 +201,7 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
     final go = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('긴급 SOS', style: TextStyle(fontSize: 22)),
+        title: const Text('응급 상황', style: TextStyle(fontSize: 22)),
         content: const Text(
           '119에 연결할까요?',
           style: TextStyle(fontSize: 18),
@@ -203,7 +220,7 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
       ),
     );
     if (go == true && mounted) {
-      await _launchTel('119', '긴급 SOS, 119에 연결합니다.');
+      await _launchTel('119', '응급 상황입니다. 119에 연결합니다.');
     }
   }
 
@@ -221,6 +238,7 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
                 child: Column(
                   children: [
                     Expanded(
+                      flex: 2,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -247,6 +265,7 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
                     ),
                     const SizedBox(height: 12),
                     Expanded(
+                      flex: 2,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -261,13 +280,24 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _QuickCard(
-                              label: '긴급 SOS',
+                              label: '119에 전화',
                               icon: Icons.emergency_outlined,
                               color: PiumColors.tileRed,
                               onTap: () => _onTileTap(_HomeTileAction.sos),
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 88,
+                      width: double.infinity,
+                      child: _QuickCard(
+                        label: '일자리 찾기',
+                        icon: Icons.work_outline,
+                        color: PiumColors.tilePurple,
+                        onTap: () => _onTileTap(_HomeTileAction.jobs),
                       ),
                     ),
                   ],
@@ -326,7 +356,7 @@ class _PiumHomeScreenState extends State<PiumHomeScreen> {
   }
 }
 
-enum _HomeTileAction { hospital, family, kiosk, sos }
+enum _HomeTileAction { hospital, family, kiosk, sos, jobs }
 
 enum _IntentType { hospital, kiosk, family }
 

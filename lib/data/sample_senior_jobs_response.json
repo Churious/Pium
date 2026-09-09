@@ -1,0 +1,27 @@
+{
+  "jobs": [
+    {
+      "jobId": "SAMPLE_001",
+      "title": "동네 마트 진열 도우미",
+      "acceptanceStatus": "접수중",
+      "acceptanceStartDate": "2026.01.01",
+      "acceptanceEndDate": "2026.03.31",
+      "workRegion": "강남구",
+      "workAddress": "서울특별시 강남구 테헤란로 123",
+      "employmentType": "시간제일자리",
+      "jobCategory": "판매",
+      "acceptanceMethod": "방문",
+      "acceptanceAgency": "행복마트",
+      "workDescription": "가벼운 상품 진열과 정리를 도와주세요.",
+      "recruitAge": "60 이상",
+      "recruitCount": "2",
+      "contactName": "이매니저",
+      "contactPhone": "02-555-0101",
+      "detailUrl": "",
+      "otherNotes": ""
+    }
+  ],
+  "pageNo": 1,
+  "numOfRows": 10,
+  "totalCount": 1
+}

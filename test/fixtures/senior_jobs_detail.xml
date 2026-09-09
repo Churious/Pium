@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header>
+    <resultCode>00</resultCode>
+    <resultMsg>NORMAL SERVICE.</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <jobId>RECR_000000000013950</jobId>
+        <wantedTitle>[서울시립미술관] 전시장 안내 도우미</wantedTitle>
+        <frAcptDd>20260101</frAcptDd>
+        <toAcptDd>20260331</toAcptDd>
+        <plDetAddr>서울특별시 중구 서소문로 100</plDetAddr>
+        <plbizNm>서울시립미술관</plbizNm>
+        <detCnts>전시 안내 및 동선 정리를 도와주세요.</detCnts>
+        <clltPrnnum>2</clltPrnnum>
+        <age>60</age>
+        <ageLim>이상</ageLim>
+        <acptMthdCd>CM0804</acptMthdCd>
+        <clerk>김담당</clerk>
+        <clerkContt>02-123-4567</clerkContt>
+        <homepage>https://example.org/job/1</homepage>
+        <etcItm>장년우대</etcItm>
+      </item>
+    </items>
+  </body>
+</response>

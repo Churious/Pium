@@ -10,7 +10,8 @@ void main() {
     expect(find.text('병원/약국'), findsOneWidget);
     expect(find.text('가족 연락'), findsOneWidget);
     expect(find.text('키오스크'), findsOneWidget);
-    expect(find.text('긴급 SOS'), findsOneWidget);
+    expect(find.text('119에 전화'), findsOneWidget);
+    expect(find.text('일자리 찾기'), findsOneWidget);
     expect(find.text('음성 질문'), findsOneWidget);
   });
 }

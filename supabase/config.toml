@@ -1,2 +1,4 @@
 # Supabase project: PIUM (glhgqolncenyqtsyzuhz, ap-northeast-2)
-# Deploy: supabase link --project-ref glhgqolncenyqtsyzuhz && supabase functions deploy nearby
+# Deploy nearby:  supabase functions deploy nearby
+# Deploy jobs:    supabase functions deploy senior-jobs
+# Secret:         supabase secrets set SENIOR_JOB_API_KEY="발급받은_공공데이터_인증키"

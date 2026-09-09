@@ -86,9 +86,9 @@ class _ModePicker extends StatelessWidget {
         const SizedBox(height: 16),
         _ModeCard(
           icon: Icons.emoji_events_outlined,
-          title: '실전 모드',
-          subtitle: '진짜처럼 주문하기',
-          description: '주문문만 듣고 스스로 완료해요.\n안내 없이 실력을 확인해 보세요.',
+          title: '도전 모드',
+          subtitle: '도움 없이 주문해 보기',
+          description: '주문만 보고 천천히 직접 주문해 보세요.\n연습 후에 도전해 보세요.',
           color: const Color(0xFF7C3AED),
           onTap: onReal,
         ),
@@ -96,8 +96,8 @@ class _ModePicker extends StatelessWidget {
         _ModeCard(
           icon: Icons.touch_app,
           title: '자유 모드',
-          subtitle: '마음대로 눌러보기',
-          description: '정답 없이 자유롭게 메뉴를 골라 보세요.\n익숙해지면 실전 모드에 도전해 보세요.',
+          subtitle: '자유롭게 연습하기',
+          description: '정답 없이 자유롭게 메뉴를 골라 보세요.\n익숙해지면 도전 모드에도 도전해 보세요.',
           color: PiumColors.tileTeal,
           onTap: onFree,
         ),
@@ -197,22 +197,18 @@ class KioskSessionScreen extends StatefulWidget {
   State<KioskSessionScreen> createState() => _KioskSessionScreenState();
 }
 
-class _KioskSessionScreenState extends State<KioskSessionScreen>
-    with TickerProviderStateMixin {
+class _KioskSessionScreenState extends State<KioskSessionScreen> {
   KioskStep _step = KioskStep.dineType;
   String _category = '추천';
   DineType? _dineType;
   final List<CartLineItem> _cart = [];
-  bool _showIcAnimation = false;
+  bool _showCardPayment = false;
   bool _dialogOpen = false;
   KioskProduct? _pendingProduct;
   KioskOrderItemSpec? _pendingSpec;
   KioskMission? _currentMission;
   int _completedRounds = 0;
   int _realHintsUsed = 0;
-  bool _browseMore = false;
-
-  late final AnimationController _icCtrl;
 
   bool get _isPractice => widget.mode == KioskMode.practice;
   bool get _isReal => widget.mode == KioskMode.real;
@@ -230,22 +226,18 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       );
     }
     if (_isReal) return _mission.orderText;
-    return '원하는 메뉴를 마음대로 골라 보세요. 다 고르셨으면 결제하기를 누르세요.';
+    return '원하는 메뉴를 자유롭게 골라 보세요. 다 고르셨으면 결제하기를 누르세요.';
   }
 
   String get _appBarTitle {
     if (_isPractice) return '연습 · ${_mission.title}';
-    if (_isReal) return '실전 · 주문하기';
+    if (_isReal) return '도전 · 주문하기';
     return '자유 모드 · 카페 주문';
   }
 
   @override
   void initState() {
     super.initState();
-    _icCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    );
     if (_hasMission) {
       _currentMission = randomKioskMission();
     }
@@ -255,20 +247,13 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       if (_isPractice) {
         await PiumTts.speak('연습 모드입니다. ${_mission.startSpeech}');
       } else if (_isReal) {
-        await PiumTts.speak('실전 모드입니다. ${_mission.orderText}');
+        await PiumTts.speak('도전 모드입니다. ${_mission.orderText}');
       } else {
         await PiumTts.speak(
           '자유 모드입니다. 매장 식사나 포장을 고른 뒤, 원하는 메뉴를 골라 보세요.',
         );
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _icCtrl.stop();
-    _icCtrl.dispose();
-    super.dispose();
   }
 
   Future<T?> _showKioskDialog<T>(WidgetBuilder builder) {
@@ -306,7 +291,7 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       _step = KioskStep.selectMenu;
       if (_hasMission) {
         _category =
-            _mission.nextMissingSpec(_cart)?.product()?.category ?? '추천';
+            _mission.nextMissingSpec(_cart)?.product()?.menuCategory ?? '추천';
       } else {
         _category = '추천';
       }
@@ -350,8 +335,8 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
   }
 
   void _onCategoryTap(String cat) {
-    if (_isPractice && !_browseMore) {
-      final nextCat = _mission.nextMissingSpec(_cart)?.product()?.category;
+    if (_isPractice) {
+      final nextCat = _mission.nextMissingSpec(_cart)?.product()?.menuCategory;
       if (nextCat != null && cat != nextCat) {
         _wrongTap();
         return;
@@ -360,58 +345,92 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
     setState(() => _category = cat);
   }
 
-  KioskOptionsGuide? _optionsGuideFor(KioskOptions? required) {
+  void _addOrIncrementLine(KioskProduct p, KioskOptions options) {
+    final normalized = p.clampOptions(options);
+    final idx = _cart.indexWhere(
+      (line) =>
+          line.product.id == p.id &&
+          line.options.sameAs(
+            normalized,
+            compareDrinkOptions: p.hasDrinkOptions,
+          ),
+    );
+    setState(() {
+      if (idx >= 0) {
+        _cart[idx].quantity++;
+      } else {
+        _cart.add(CartLineItem(product: p, options: normalized));
+      }
+    });
+  }
+
+  void _onCartLineIncrease(int index) {
+    if (index < 0 || index >= _cart.length) return;
+    setState(() => _cart[index].quantity++);
+    if (_isPractice) _syncPracticeStep();
+  }
+
+  void _onCartLineDecrease(int index) {
+    if (index < 0 || index >= _cart.length) return;
+    final name = _cart[index].displayLabel;
+    setState(() {
+      if (_cart[index].quantity > 1) {
+        _cart[index].quantity--;
+      } else {
+        _cart.removeAt(index);
+      }
+    });
+    if (_isPractice) _syncPracticeStep();
+    PiumTts.speak('$name 수량을 줄였습니다.');
+  }
+
+  KioskOptionsGuide? _optionsGuideFor(
+    KioskProduct product,
+    KioskOptions? required,
+  ) {
     if (required == null) return null;
     return KioskOptionsGuide(
-      ice: required.ice != '보통' ? required.ice : null,
+      temperature: product.supportsHotAndCold ? required.temperature : null,
+      ice: required.isIced && required.ice != '보통' ? required.ice : null,
       extraShot: required.extraShot ? true : null,
       tumbler: required.tumbler ? true : null,
     );
   }
 
-  void _addLineToCart(KioskProduct p, KioskOptions options) {
-    setState(() => _cart.add(CartLineItem(product: p, options: options)));
-    PiumTts.speak('${p.name}${options.summary}을(를) 담았습니다.');
-    _syncPracticeStep();
-  }
+  void _onProductTap(KioskProduct p) {
+    if (_isPractice) {
+      final next = _mission.nextMissingSpec(_cart);
+      if (next == null || next.productId != p.id) {
+        _wrongTap();
+        return;
+      }
+      final reqOpts = next.options ?? KioskOptions.defaultOptions;
+      if (p.hasDrinkOptions && _mission.optionsNeedDialog(reqOpts, p)) {
+        _pendingProduct = p;
+        _pendingSpec = next;
+        deferState(
+          () => _showOptionsModal(
+            guided: true,
+            requiredOptions: reqOpts,
+          ),
+        );
+        return;
+      }
+      _addOrIncrementLine(p, reqOpts);
+      PiumTts.speak('${p.name}을(를) 담았습니다.');
+      _syncPracticeStep();
+      return;
+    }
 
-  void _addProductFreeStyle(KioskProduct p) {
     if (p.hasDrinkOptions) {
       _pendingProduct = p;
       _pendingSpec = null;
       deferState(() => _showOptionsModal(guided: false));
-    } else {
-      setState(() => _cart.add(CartLineItem(product: p)));
-      PiumTts.speak('${p.name}을(를) 담았습니다.');
-    }
-  }
-
-  void _onProductTap(KioskProduct p) {
-    if (!_isPractice || _browseMore || _isReal) {
-      _addProductFreeStyle(p);
       return;
     }
 
-    final next = _mission.nextMissingSpec(_cart);
-    if (next == null || p.id != next.productId) {
-      _wrongTap();
-      return;
-    }
-
-    final reqOpts = next.options ?? KioskOptions.defaultOptions;
-    if (p.hasDrinkOptions && _mission.optionsNeedDialog(reqOpts)) {
-      _pendingProduct = p;
-      _pendingSpec = next;
-      deferState(
-        () => _showOptionsModal(
-          guided: true,
-          requiredOptions: reqOpts,
-        ),
-      );
-      return;
-    }
-
-    _addLineToCart(p, reqOpts);
+    _addOrIncrementLine(p, KioskOptions.defaultOptions);
+    PiumTts.speak('${p.name}을(를) 담았습니다.');
   }
 
   void _onOptionsCancel({required bool guided}) {
@@ -420,10 +439,7 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       setState(() {
         _pendingProduct = null;
         _pendingSpec = null;
-        if (guided) {
-          _step = KioskStep.selectMenu;
-          _browseMore = false;
-        }
+        if (guided) _step = KioskStep.selectMenu;
       });
       PiumTts.speak('옵션 선택을 취소했습니다. 메뉴를 다시 골라 보세요.');
     });
@@ -434,10 +450,15 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
     KioskOptions? requiredOptions,
   }) {
     if (!mounted) return;
-    final guide = guided ? _optionsGuideFor(requiredOptions) : null;
+    final pending = _pendingProduct;
+    final guide = guided && pending != null
+        ? _optionsGuideFor(pending, requiredOptions)
+        : null;
     _showKioskDialog<void>(
       (ctx) => _OptionsDialog(
         guide: guide,
+        supportsHotAndCold: pending?.supportsHotAndCold ?? false,
+        supportsExtraShot: pending?.supportsExtraShot ?? false,
         onConfirm: (options) {
           Navigator.of(ctx, rootNavigator: true).pop();
           deferState(() {
@@ -445,8 +466,13 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
             final pending = _pendingProduct;
             if (pending == null) return;
 
-            if (guided && requiredOptions != null &&
-                !options.matches(requiredOptions)) {
+            final normalized = pending.clampOptions(options);
+            if (guided &&
+                requiredOptions != null &&
+                !normalized.matches(
+                  requiredOptions,
+                  compareDrinkOptions: pending.hasDrinkOptions,
+                )) {
               PiumTts.speak('안내에 맞게 옵션을 선택해 주세요.');
               _pendingProduct = pending;
               _pendingSpec = _pendingSpec;
@@ -457,9 +483,13 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
               return;
             }
 
-            _addLineToCart(pending, options);
+            _addOrIncrementLine(pending, normalized);
+            PiumTts.speak(
+              '${pending.name}${normalized.summaryFor(hasDrinkOptions: pending.hasDrinkOptions)}을(를) 담았습니다.',
+            );
             _pendingProduct = null;
             _pendingSpec = null;
+            if (guided) _syncPracticeStep();
           });
         },
         onCancel: () {
@@ -468,17 +498,6 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
         },
       ),
     );
-  }
-
-  void _onRemoveFromCart(int index) {
-    if (index < 0 || index >= _cart.length) return;
-    final removed = _cart[index];
-    setState(() {
-      _cart.removeAt(index);
-      if (_isPractice) _browseMore = false;
-    });
-    if (_isPractice) _syncPracticeStep();
-    PiumTts.speak('${removed.displayLabel}을(를) 뺐습니다.');
   }
 
   Future<void> _useRealHint() async {
@@ -493,16 +512,6 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
 
   Future<void> _replayOrderText() async {
     await PiumTts.speak(_mission.orderText);
-  }
-
-  void _onAddMore() {
-    setState(() {
-      _browseMore = true;
-      if (_isPractice && _step == KioskStep.payment) {
-        _step = KioskStep.selectMenu;
-      }
-    });
-    PiumTts.speak('메뉴를 더 골라 보세요.');
   }
 
   Future<void> _onPayPressed() async {
@@ -526,44 +535,44 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       }
       if (!_mission.isCartComplete(_cart)) {
         await PiumTts.speak('아직 담아야 할 메뉴가 남아 있어요.');
-        setState(() {
-          _step = KioskStep.selectMenu;
-          _browseMore = false;
-        });
+        setState(() => _step = KioskStep.selectMenu);
         return;
       }
     }
 
-    await _showKioskDialog<void>(
-      (ctx) => _PaymentDialog(
-        practiceMode: _isGuided,
-        onCard: () {
-          Navigator.of(ctx, rootNavigator: true).pop();
-          deferState(_runCardPayment);
-        },
-        onWrong: _isGuided ? _wrongTap : null,
-      ),
+    _startCardPayment();
+  }
+
+  Future<void> _startCardPayment() async {
+    if (!mounted) return;
+    setState(() => _showCardPayment = true);
+    await PiumTts.speak(
+      '카드를 아래에서 위로 끌어 올려, 리더기에 끝까지 넣어 주세요.',
     );
   }
 
-  Future<void> _runCardPayment() async {
+  Future<void> _completeCardPayment() async {
     if (!mounted) return;
-    setState(() => _showIcAnimation = true);
-    _icCtrl.repeat();
-    await PiumTts.speak('IC 카드를 투입구에 끝까지 넣어주세요.');
-    await Future<void>.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-    _icCtrl.stop();
-    _icCtrl.reset();
     setState(() {
-      _showIcAnimation = false;
+      _showCardPayment = false;
       _step = KioskStep.complete;
     });
+    if (_isReal) {
+      await PiumTts.speak(
+        '맞았어요! 주문을 정확히 하셨어요. 결제도 완료되었습니다.',
+      );
+    } else {
+      await PiumTts.speak('결제가 완료되었습니다.');
+    }
     await _showReceipt();
   }
 
+  void _cancelCardPayment() {
+    setState(() => _showCardPayment = false);
+    PiumTts.speak('결제를 취소했습니다.');
+  }
+
   void _onCancel() {
-    _icCtrl.stop();
     if (_dialogOpen) {
       Navigator.of(context, rootNavigator: true).pop();
     }
@@ -574,15 +583,14 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
         _category = '추천';
         _dineType = null;
         _cart.clear();
-        _showIcAnimation = false;
+        _showCardPayment = false;
         _pendingProduct = null;
-        _browseMore = false;
       });
       final msg = _isPractice
-          ? '주문이 취소되었습니다. 처음부터 다시 연습해 보세요.'
+          ? '처음부터 다시 연습해 보세요.'
           : _isReal
-              ? '주문이 취소되었습니다. 처음부터 다시 해 보세요.'
-              : '주문이 취소되었습니다. 다시 골라 보세요.';
+              ? '처음부터 다시 해 보세요.'
+              : '처음부터 다시 골라 보세요.';
       PiumTts.speak(msg);
       deferState(() {
         if (mounted) _showDineModal();
@@ -598,33 +606,32 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
       _category = '추천';
       _dineType = null;
       _cart.clear();
-      _showIcAnimation = false;
+      _showCardPayment = false;
       _pendingProduct = null;
       _pendingSpec = null;
-      _browseMore = false;
       _realHintsUsed = 0;
     });
     await _showDineModal();
     if (!mounted) return;
-    final intro = _isReal ? '새로운 실전 주문입니다.' : '새로운 연습입니다.';
+    final intro = _isReal ? '새로운 도전 주문입니다.' : '새로운 연습입니다.';
     await PiumTts.speak('$intro ${_mission.startSpeech}');
   }
 
   Future<void> _finishMissionSession() async {
     final count = _completedRounds;
-    final label = _isReal ? '실전' : '연습';
+    final label = _isReal ? '도전' : '연습';
     await PiumTts.speak(
       count <= 1
-          ? '$label을 마쳤습니다! 정말 잘하셨어요.'
-          : '$label $count번을 마쳤습니다! 정말 잘하셨어요.',
+          ? '$label 주문 과정을 끝냈어요.'
+          : '$label $count번의 주문 과정을 끝냈어요.',
     );
     if (mounted) Navigator.pop(context);
   }
 
   Future<void> _showMissionContinueChoice() async {
-    final label = _isReal ? '실전' : '연습';
+    final label = _isReal ? '도전' : '연습';
     await PiumTts.speak(
-      '다른 주문도 $label해 보시겠어요? 더 하기 또는 그만하기를 선택해 주세요.',
+      '다른 주문도 $label해 보시겠어요? 더 하기 또는 끝내기를 선택해 주세요.',
     );
     if (!mounted) return;
     await _showKioskDialog<void>(
@@ -647,19 +654,20 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
     if (_hasMission) {
       setState(() => _completedRounds++);
     }
-    await PiumTts.speak(
-      _isReal
-          ? '주문하신 대로 잘 담으셨어요! 정말 잘하셨습니다!'
-          : _isPractice
-              ? '연습 주문이 완료되었습니다! 정말 잘하셨어요.'
-              : '주문이 완료되었습니다! 무인주문기 연습, 수고하셨습니다.',
-    );
+    if (!_isReal) {
+      await PiumTts.speak(
+        _isPractice
+            ? '연습 주문이 완료되었습니다.'
+            : '주문이 완료되었습니다. 무인주문기 연습, 수고하셨습니다.',
+      );
+    }
     if (!mounted) return;
     await _showKioskDialog<void>(
       (ctx) => _ReceiptDialog(
         items: _cart,
         dineType: _dineType ?? DineType.dineIn,
-        isPractice: _isPractice || _isReal,
+        isPractice: _isPractice,
+        isReal: _isReal,
         onClose: () {
           Navigator.of(ctx, rootNavigator: true).pop();
           deferState(() {
@@ -676,13 +684,13 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
   int get _total => _cart.fold(0, (s, line) => s + line.linePrice);
 
   String? get _highlightCategory {
-    if (!_isPractice || _browseMore) return null;
+    if (!_isPractice) return null;
     if (_dineType != _mission.dineType) return null;
-    return _mission.nextMissingSpec(_cart)?.product()?.category;
+    return _mission.nextMissingSpec(_cart)?.product()?.menuCategory;
   }
 
   bool _highlightProduct(KioskProduct p) {
-    if (!_isPractice || _browseMore) return false;
+    if (!_isPractice) return false;
     if (_dineType != _mission.dineType) return false;
     return _mission.nextMissingSpec(_cart)?.productId == p.id;
   }
@@ -690,7 +698,7 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
   @override
   Widget build(BuildContext context) {
     final filtered =
-        kioskProducts.where((p) => p.category == _category).toList();
+        kioskProducts.where((p) => p.isInCategory(_category)).toList();
 
     return Scaffold(
       backgroundColor: PiumColors.kioskBg,
@@ -763,8 +771,8 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
                 cart: _cart,
                 total: _total,
                 onCancel: _onCancel,
-                onAddMore: _cart.isNotEmpty ? _onAddMore : null,
-                onRemoveAt: _onRemoveFromCart,
+                onLineIncrease: _onCartLineIncrease,
+                onLineDecrease: _onCartLineDecrease,
                 onPay: _onPayPressed,
                 highlightPay: _isPractice &&
                     _step == KioskStep.payment &&
@@ -772,7 +780,12 @@ class _KioskSessionScreenState extends State<KioskSessionScreen>
               ),
             ],
           ),
-          if (_showIcAnimation) _IcCardOverlay(controller: _icCtrl),
+          if (_showCardPayment)
+            _CardDragPaymentOverlay(
+              showGuide: _isPractice,
+              onComplete: _completeCardPayment,
+              onCancel: _cancelCardPayment,
+            ),
         ],
       ),
     );
@@ -899,7 +912,7 @@ class _ProductCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -909,6 +922,8 @@ class _ProductCard extends StatelessWidget {
               Text(
                 product.name,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -933,22 +948,52 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
+class _QtyButton extends StatelessWidget {
+  const _QtyButton({
+    required this.icon,
+    required this.onPressed,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 44.0 : 52.0;
+    return Material(
+      color: PiumColors.kioskAccent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Icon(icon, size: compact ? 24 : 28, color: Colors.black),
+        ),
+      ),
+    );
+  }
+}
+
 class _CartBar extends StatelessWidget {
   const _CartBar({
     required this.cart,
     required this.total,
     required this.onCancel,
-    required this.onRemoveAt,
+    required this.onLineIncrease,
+    required this.onLineDecrease,
     required this.onPay,
     required this.highlightPay,
-    this.onAddMore,
   });
 
   final List<CartLineItem> cart;
   final int total;
   final VoidCallback onCancel;
-  final ValueChanged<int> onRemoveAt;
-  final VoidCallback? onAddMore;
+  final ValueChanged<int> onLineIncrease;
+  final ValueChanged<int> onLineDecrease;
   final VoidCallback onPay;
   final bool highlightPay;
 
@@ -983,56 +1028,78 @@ class _CartBar extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 132),
+              constraints: const BoxConstraints(maxHeight: 168),
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: cart.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 6),
                 itemBuilder: (context, index) {
                   final item = cart[index];
-                  return Material(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(10),
-                    child: InkWell(
-                      onTap: () => onRemoveAt(index),
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Row(
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Text(
-                                '${item.displayLabel} · ${item.linePrice}원',
+                                item.displayLabel,
                                 style: const TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
+                                  height: 1.3,
                                 ),
                               ),
                             ),
-                            Container(
-                              width: 60,
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF7F1D1D),
-                                borderRadius: BorderRadius.circular(10),
+                            Text(
+                              '${item.linePrice}원',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                color: PiumColors.kioskAccent,
+                                fontWeight: FontWeight.bold,
                               ),
-                              child: const Text(
-                                '빼기',
-                                style: TextStyle(
-                                  fontSize: 16,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _QtyButton(
+                              icon: Icons.remove,
+                              compact: true,
+                              onPressed: () => onLineDecrease(index),
+                            ),
+                            SizedBox(
+                              width: 36,
+                              child: Text(
+                                '${item.quantity}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
+                            _QtyButton(
+                              icon: Icons.add,
+                              compact: true,
+                              onPressed: () => onLineIncrease(index),
+                            ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
                   );
                 },
@@ -1049,70 +1116,86 @@ class _CartBar extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onCancel,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white54, width: 2),
-                    minimumSize: const Size(0, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    '주문 취소',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          SizedBox(
+            height: 56,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _KioskBarButton(
+                    label: '처음부터',
+                    outlined: true,
+                    onPressed: onCancel,
                   ),
                 ),
-              ),
-              if (onAddMore != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: onAddMore,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white54, width: 2),
-                      minimumSize: const Size(0, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      '더 담기',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  child: StepHighlight(
+                    active: highlightPay,
+                    borderRadius: 12,
+                    child: _KioskBarButton(
+                      label: '결제하기',
+                      filled: true,
+                      onPressed: onPay,
                     ),
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
-              Expanded(
-                flex: onAddMore != null ? 2 : 2,
-                child: StepHighlight(
-                  active: highlightPay,
-                  borderRadius: 12,
-                  child: FilledButton(
-                    onPressed: onPay,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFEA580C),
-                      minimumSize: const Size(0, 56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      '결제하기',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 하단·다이얼로그 공통 — 높이·글자 크기 통일
+class _KioskBarButton extends StatelessWidget {
+  const _KioskBarButton({
+    required this.label,
+    required this.onPressed,
+    this.outlined = false,
+    this.filled = false,
+    this.onLightBackground = false,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool outlined;
+  final bool filled;
+  final bool onLightBackground;
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+    if (filled) {
+      return FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFFEA580C),
+          minimumSize: const Size(double.infinity, 56),
+          shape: shape,
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+    final fg = onLightBackground ? PiumColors.navy : Colors.white;
+    final border = onLightBackground ? PiumColors.navy : Colors.white54;
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: fg,
+        side: BorderSide(color: border, width: 2),
+        minimumSize: const Size(double.infinity, 56),
+        shape: shape,
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -1216,11 +1299,15 @@ class _OptionsDialog extends StatefulWidget {
   const _OptionsDialog({
     required this.onConfirm,
     required this.onCancel,
+    required this.supportsHotAndCold,
+    required this.supportsExtraShot,
     this.guide,
   });
 
   final ValueChanged<KioskOptions> onConfirm;
   final VoidCallback onCancel;
+  final bool supportsHotAndCold;
+  final bool supportsExtraShot;
   final KioskOptionsGuide? guide;
 
   @override
@@ -1228,12 +1315,28 @@ class _OptionsDialog extends StatefulWidget {
 }
 
 class _OptionsDialogState extends State<_OptionsDialog> {
+  late DrinkTemperature _temperature;
   bool _extraShot = false;
   bool _tumbler = false;
   String _ice = '보통';
 
-  KioskOptions get _selected =>
-      KioskOptions(extraShot: _extraShot, tumbler: _tumbler, ice: _ice);
+  @override
+  void initState() {
+    super.initState();
+    _temperature = widget.supportsHotAndCold
+        ? DrinkTemperature.hot
+        : DrinkTemperature.ice;
+  }
+
+  bool get _showIceOptions =>
+      _temperature == DrinkTemperature.ice || !widget.supportsHotAndCold;
+
+  KioskOptions get _selected => KioskOptions(
+        temperature: _temperature,
+        extraShot: _extraShot,
+        tumbler: _tumbler,
+        ice: _ice,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -1253,65 +1356,101 @@ class _OptionsDialogState extends State<_OptionsDialog> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            StepHighlight(
-              active: g?.extraShot == true && !_extraShot,
-              borderRadius: 10,
-              child: _OptionTile(
-                label: '샷 추가 (+500원)',
-                selected: _extraShot,
-                onTap: () => setState(() => _extraShot = !_extraShot),
+            if (widget.supportsHotAndCold) ...[
+              const Text(
+                '온도',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
-            ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _TemperatureChip(
+                      label: '따뜻하게',
+                      selected: _temperature == DrinkTemperature.hot,
+                      highlight: g?.temperature == DrinkTemperature.hot &&
+                          _temperature != DrinkTemperature.hot,
+                      onTap: () =>
+                          setState(() => _temperature = DrinkTemperature.hot),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _TemperatureChip(
+                      label: '차갑게',
+                      selected: _temperature == DrinkTemperature.ice,
+                      highlight: g?.temperature == DrinkTemperature.ice &&
+                          _temperature != DrinkTemperature.ice,
+                      onTap: () =>
+                          setState(() => _temperature = DrinkTemperature.ice),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (widget.supportsExtraShot)
+              StepHighlight(
+                active: g?.extraShot == true && !_extraShot,
+                borderRadius: 10,
+                child: _OptionTile(
+                  label: '커피 진하게 (+500원)',
+                  selected: _extraShot,
+                  onTap: () => setState(() => _extraShot = !_extraShot),
+                ),
+              ),
             StepHighlight(
               active: g?.tumbler == true && !_tumbler,
               borderRadius: 10,
               child: _OptionTile(
-                label: '텀블러 할인 (-300원)',
+                label: '개인 컵 할인 (-300원)',
                 selected: _tumbler,
                 onTap: () => setState(() => _tumbler = !_tumbler),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              '얼음 양',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: ['적게', '보통', '많이'].map((v) {
-                final sel = _ice == v;
-                final highlight = g?.ice != null && g!.ice == v && !sel;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: StepHighlight(
-                      active: highlight,
-                      borderRadius: 10,
-                      child: Material(
-                        color: sel ? PiumColors.navy : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(10),
-                        child: InkWell(
-                          onTap: () => setState(() => _ice = v),
+            if (_showIceOptions) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '얼음 양',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: ['적게', '보통', '많이'].map((v) {
+                  final sel = _ice == v;
+                  final highlight = g?.ice != null && g!.ice == v && !sel;
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: StepHighlight(
+                        active: highlight,
+                        borderRadius: 10,
+                        child: Material(
+                          color: sel ? PiumColors.navy : Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            height: 48,
-                            alignment: Alignment.center,
-                            child: Text(
-                              v,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: sel ? Colors.white : Colors.black,
+                          child: InkWell(
+                            onTap: () => setState(() => _ice = v),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              child: Text(
+                                v,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: sel ? Colors.white : Colors.black,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
+                  );
+                }).toList(),
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               children: [
@@ -1334,22 +1473,27 @@ class _OptionsDialogState extends State<_OptionsDialog> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  flex: 2,
                   child: StepHighlight(
                     active: g != null,
                     borderRadius: 12,
-                    child: FilledButton(
-                      onPressed: () => widget.onConfirm(_selected),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: PiumColors.navy,
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 56,
+                      child: FilledButton(
+                        onPressed: () => widget.onConfirm(_selected),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: PiumColors.navy,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        '선택 완료',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        child: const Text(
+                          '완료',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1357,6 +1501,48 @@ class _OptionsDialogState extends State<_OptionsDialog> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TemperatureChip extends StatelessWidget {
+  const _TemperatureChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.highlight = false,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return StepHighlight(
+      active: highlight,
+      borderRadius: 10,
+      child: Material(
+        color: selected ? PiumColors.navy : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 52,
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1411,63 +1597,119 @@ class _OptionTile extends StatelessWidget {
   }
 }
 
-class _PaymentDialog extends StatelessWidget {
-  const _PaymentDialog({
-    required this.practiceMode,
-    required this.onCard,
-    this.onWrong,
+class _CardDragPaymentOverlay extends StatefulWidget {
+  const _CardDragPaymentOverlay({
+    required this.onComplete,
+    required this.onCancel,
+    required this.showGuide,
   });
 
-  final bool practiceMode;
-  final VoidCallback onCard;
-  final Future<void> Function()? onWrong;
+  final VoidCallback onComplete;
+  final VoidCallback onCancel;
+  final bool showGuide;
+
+  @override
+  State<_CardDragPaymentOverlay> createState() =>
+      _CardDragPaymentOverlayState();
+}
+
+class _CardDragPaymentOverlayState extends State<_CardDragPaymentOverlay> {
+  double _insertProgress = 0;
+  bool _done = false;
+
+  static const _travel = 200.0;
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    if (_done) return;
+    setState(() {
+      _insertProgress =
+          (_insertProgress - details.delta.dy / _travel).clamp(0.0, 1.0);
+      if (_insertProgress >= 0.92) {
+        _done = true;
+        widget.onComplete();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+    final nearDone = _insertProgress >= 0.7;
+    return Material(
+      color: Colors.black.withValues(alpha: 0.9),
+      child: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 16),
             const Text(
-              '결제 수단을 선택해 주세요.',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            StepHighlight(
-              active: practiceMode,
-              child: _DialogChoice(
-                icon: Icons.credit_card,
-                label: '카드 결제',
-                onTap: onCard,
+              '카드를 리더기에 넣어 주세요',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 12),
-            _DialogChoice(
-              icon: Icons.payments,
-              label: '현금 결제',
-              onTap: () {
-                if (practiceMode) {
-                  onWrong?.call();
-                } else {
-                  onCard();
-                }
-              },
+            const SizedBox(height: 8),
+            Text(
+              nearDone ? '거의 다 됐어요!' : '카드를 아래에서 위로 끌어 올리세요',
+              style: TextStyle(
+                fontSize: 18,
+                color: nearDone ? PiumColors.pulseYellow : Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 12),
-            _DialogChoice(
-              icon: Icons.qr_code,
-              label: '간편 결제',
-              onTap: () {
-                if (practiceMode) {
-                  onWrong?.call();
-                } else {
-                  onCard();
-                }
-              },
+            const SizedBox(height: 24),
+            Expanded(
+              child: Center(
+                child: SizedBox(
+                  width: 300,
+                  height: 340,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 30,
+                        child: StepHighlight(
+                          active: widget.showGuide,
+                          borderRadius: 14,
+                          child: _CardReaderSlot(highlight: nearDone),
+                        ),
+                      ),
+                      Positioned(
+                        top: 90 + (1 - _insertProgress) * _travel,
+                        left: 50,
+                        child: GestureDetector(
+                          onVerticalDragUpdate: _onDragUpdate,
+                          child: _DraggablePaymentCard(
+                            insertProgress: _insertProgress,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: widget.onCancel,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '결제 취소',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -1476,102 +1718,95 @@ class _PaymentDialog extends StatelessWidget {
   }
 }
 
-class _IcCardOverlay extends StatelessWidget {
-  const _IcCardOverlay({required this.controller});
-  final AnimationController controller;
+class _CardReaderSlot extends StatelessWidget {
+  const _CardReaderSlot({required this.highlight});
+
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withValues(alpha: 0.88),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'IC 카드를 투입구에\n끝까지 넣어주세요.',
-              textAlign: TextAlign.center,
+      width: 240,
+      height: 130,
+      decoration: BoxDecoration(
+        color: const Color(0xFF374151),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: highlight ? PiumColors.pulseYellow : Colors.white54,
+          width: highlight ? 4 : 3,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              '카드 투입구',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                height: 1.4,
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 32),
-            AnimatedBuilder(
-              animation: controller,
-              builder: (_, __) {
-                final t = controller.value;
-                return SizedBox(
-                  width: 280,
-                  height: 200,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 240,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF374151),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white54, width: 3),
-                        ),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: 180,
-                            height: 8,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Transform.translate(
-                        offset: Offset(0, 60 - t * 100),
-                        child: Container(
-                          width: 160,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withValues(alpha: 0.5),
-                                blurRadius: 12,
-                              ),
-                            ],
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.credit_card,
-                                  color: Colors.white, size: 36),
-                              Text(
-                                'IC CARD',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          ),
+          Container(
+            width: 190,
+            height: 10,
+            margin: const EdgeInsets.only(bottom: 18),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(5),
             ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(color: Colors.white),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DraggablePaymentCard extends StatelessWidget {
+  const _DraggablePaymentCard({required this.insertProgress});
+
+  final double insertProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
         ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withValues(alpha: 0.45),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.drag_handle,
+              color: Colors.white.withValues(alpha: 0.8), size: 28),
+          const SizedBox(height: 6),
+          const Icon(Icons.credit_card, color: Colors.white, size: 40),
+          const SizedBox(height: 6),
+          Text(
+            insertProgress >= 0.5 ? '계속 밀어 넣기' : '끌어 올리기',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1592,7 +1827,7 @@ class _PracticeContinueDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = isReal ? '실전' : '연습';
+    final label = isReal ? '도전' : '연습';
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1608,54 +1843,34 @@ class _PracticeContinueDialog extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              '$label을 완료했어요!',
+              isReal ? '도전 성공!' : '주문 과정을 끝냈어요',
               style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              completedCount <= 1
-                  ? '무인주문기 $label을 잘 마쳤습니다.\n다른 주문도 $label해 볼까요?'
-                  : '지금까지 $completedCount번 $label했어요.\n다른 주문도 더 해 볼까요?',
+              isReal
+                  ? (completedCount <= 1
+                      ? '주문을 맞게 하셨어요.\n다른 주문도 도전해 볼까요?'
+                      : '지금까지 $completedCount번 맞췄어요.\n다른 주문도 더 도전해 볼까요?')
+                  : (completedCount <= 1
+                      ? '무인주문기 $label을 마쳤어요.\n다른 주문도 $label해 볼까요?'
+                      : '지금까지 $completedCount번 $label했어요.\n다른 주문도 더 해 볼까요?'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, height: 1.5),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 58,
-              child: FilledButton(
-                onPressed: onContinue,
-                style: FilledButton.styleFrom(
-                  backgroundColor: PiumColors.tileOrange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '더 하기',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-              ),
+            _KioskBarButton(
+              label: '더 하기',
+              filled: true,
+              onPressed: onContinue,
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 58,
-              child: OutlinedButton(
-                onPressed: onStop,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PiumColors.navy,
-                  side: const BorderSide(color: PiumColors.navy, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '그만하기',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-              ),
+            const SizedBox(height: 10),
+            _KioskBarButton(
+              label: '끝내기',
+              outlined: true,
+              onLightBackground: true,
+              onPressed: onStop,
             ),
           ],
         ),
@@ -1669,12 +1884,14 @@ class _ReceiptDialog extends StatelessWidget {
     required this.items,
     required this.dineType,
     required this.isPractice,
+    required this.isReal,
     required this.onClose,
   });
 
   final List<CartLineItem> items;
   final DineType dineType;
   final bool isPractice;
+  final bool isReal;
   final VoidCallback onClose;
 
   @override
@@ -1690,11 +1907,15 @@ class _ReceiptDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.receipt_long, size: 48, color: PiumColors.navy),
+            Icon(
+              isReal ? Icons.emoji_events : Icons.receipt_long,
+              size: 48,
+              color: isReal ? const Color(0xFF7C3AED) : PiumColors.navy,
+            ),
             const SizedBox(height: 12),
-            const Text(
-              '영수증',
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            Text(
+              isReal ? '맞았어요!' : '영수증',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -1751,9 +1972,11 @@ class _ReceiptDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                isPractice
-                    ? '연습 주문이 정상적으로 접수되었습니다!\n실제 매장 키오스크와 같은 순서입니다. 정말 잘하셨습니다!'
-                    : '주문이 접수되었습니다!\n자유롭게 연습해 보셨어요. 잘하셨습니다!',
+                isReal
+                    ? '정답이에요! 주문을 맞게 하셨어요.'
+                    : isPractice
+                        ? '연습 주문이 접수되었습니다.\n실제 매장 키오스크와 같은 순서예요.'
+                        : '주문이 접수되었습니다.\n자유롭게 연습해 보셨어요.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 18,

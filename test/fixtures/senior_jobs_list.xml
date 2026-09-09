@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header>
+    <resultCode>00</resultCode>
+    <resultMsg>NORMAL SERVICE.</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <jobId>RECR_000000000013950</jobId>
+        <recrtTitle>[서울시립미술관] 전시장 안내 도우미</recrtTitle>
+        <deadline>접수중</deadline>
+        <frDd>20260101</frDd>
+        <toDd>20260331</toDd>
+        <workPlcNm>중구</workPlcNm>
+        <emplymShpNm>시간제일자리</emplymShpNm>
+        <jobclsNm>안내</jobclsNm>
+        <acptMthd>방문</acptMthd>
+        <oranNm>서울시립미술관</oranNm>
+        <stmNm>100세누리</stmNm>
+      </item>
+    </items>
+    <numOfRows>10</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>1</totalCount>
+  </body>
+</response>

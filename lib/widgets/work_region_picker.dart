@@ -16,12 +16,14 @@ class WorkRegionPicker extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     this.locationService,
+    this.compact = false,
   });
 
   final WorkRegionSelection? selection;
   final bool enabled;
   final ValueChanged<WorkRegionSelection?> onChanged;
   final LocationService? locationService;
+  final bool compact;
 
   Future<void> _openPicker(BuildContext context) async {
     if (!enabled) return;
@@ -44,6 +46,73 @@ class WorkRegionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = selection?.displayLabel ?? UserMessages.jobRegionHint;
+
+    if (compact) {
+      return Semantics(
+        button: true,
+        label: UserMessages.jobRegionTitle,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? () => _openPicker(context) : null,
+            borderRadius: BorderRadius.circular(12),
+            child: Ink(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: PiumColors.navy, width: 2),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 56),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.place_outlined,
+                      color: PiumColors.navy,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            UserMessages.jobRegionTitle,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: PiumColors.navy,
+                            ),
+                          ),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: selection != null
+                                  ? PiumColors.navy
+                                  : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 26,
+                      color: PiumColors.navy,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -279,7 +348,7 @@ class _WorkRegionPickerSheetState extends State<_WorkRegionPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final sheetHeight = MediaQuery.sizeOf(context).height * 0.75;
+    final sheetHeight = MediaQuery.sizeOf(context).height * 0.55;
 
     return SafeArea(
       child: SizedBox(

@@ -163,6 +163,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     setState(() {
       if (_selected.contains(tag)) {
         _selected.remove(tag);
+        if (tag == JobFilterTag.nearHome) _selectedRegion = null;
       } else {
         _selected.add(tag);
       }
@@ -203,7 +204,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -215,80 +216,96 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
                 color: PiumColors.navy,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               UserMessages.jobSelectHint,
-              style: TextStyle(fontSize: 18, height: 1.5),
+              style: TextStyle(fontSize: 18, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            _buildFilterGrid(),
+            if (_selected.contains(JobFilterTag.nearHome)) ...[
+              const SizedBox(height: 10),
+              WorkRegionPicker(
+                selection: _selectedRegion,
+                enabled: true,
+                compact: true,
+                onChanged: (value) => setState(() => _selectedRegion = value),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 60,
+                    child: OutlinedButton(
+                      onPressed: _voiceListening ? null : _onVoiceAsk,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: PiumColors.navy,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        side: BorderSide(
+                          color: _voiceListening
+                              ? PiumColors.pulseYellow
+                              : PiumColors.navy,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _voiceListening ? Icons.hearing : Icons.mic_none,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _voiceListening
+                                ? UserMessages.jobVoiceListeningShort
+                                : '음성으로',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 60,
+                    child: FilledButton.icon(
+                      onPressed: _phase == _JobSearchPhase.searching
+                          ? null
+                          : () => _search(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: PiumColors.tilePurple,
+                        disabledBackgroundColor: const Color(0xFF94A3B8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.search, size: 26),
+                      label: const Text(
+                        '일자리 찾아보기',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            WorkRegionPicker(
-              selection: _selectedRegion,
-              enabled: _selected.contains(JobFilterTag.nearHome),
-              onChanged: (value) => setState(() => _selectedRegion = value),
-            ),
-            const SizedBox(height: 12),
-            ...JobFilterTag.values.map(
-              (tag) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _FilterButton(
-                  label: tag.label,
-                  selected: _selected.contains(tag),
-                  onTap: () => _toggleFilter(tag),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 60,
-              child: OutlinedButton.icon(
-                onPressed: _voiceListening ? null : _onVoiceAsk,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PiumColors.navy,
-                  side: BorderSide(
-                    color: _voiceListening
-                        ? PiumColors.pulseYellow
-                        : PiumColors.navy,
-                    width: 2,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: Icon(
-                  _voiceListening ? Icons.hearing : Icons.mic_none,
-                  size: 26,
-                ),
-                label: Text(
-                  _voiceListening
-                      ? UserMessages.jobVoiceListeningShort
-                      : UserMessages.jobVoiceAsk,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 60,
-              child: FilledButton.icon(
-                onPressed: _phase == _JobSearchPhase.searching ? null : () => _search(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: PiumColors.tilePurple,
-                  disabledBackgroundColor: const Color(0xFF94A3B8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.search, size: 26),
-                label: const Text(
-                  '일자리 찾아보기',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
             _buildResultsSection(),
           ],
         ),
@@ -389,6 +406,45 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
         );
     }
   }
+
+  Widget _buildFilterGrid() {
+    final tags = JobFilterTag.values;
+    final rows = <Widget>[];
+
+    for (var i = 0; i < tags.length; i += 2) {
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(bottom: i + 2 < tags.length ? 8 : 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _FilterButton(
+                  label: tags[i].label,
+                  selected: _selected.contains(tags[i]),
+                  onTap: () => _toggleFilter(tags[i]),
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: i + 1 < tags.length
+                    ? _FilterButton(
+                        label: tags[i + 1].label,
+                        selected: _selected.contains(tags[i + 1]),
+                        onTap: () => _toggleFilter(tags[i + 1]),
+                        compact: true,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(children: rows);
+  }
 }
 
 class _FilterButton extends StatelessWidget {
@@ -396,11 +452,13 @@ class _FilterButton extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.compact = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -425,27 +483,52 @@ class _FilterButton extends StatelessWidget {
             child: Container(
               width: double.infinity,
               constraints: const BoxConstraints(minHeight: 60),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Icon(
-                    selected ? Icons.check_circle : Icons.circle_outlined,
-                    color: selected ? Colors.white : PiumColors.navy,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: selected ? Colors.white : PiumColors.navy,
-                      ),
-                    ),
-                  ),
-                ],
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 10 : 16,
+                vertical: compact ? 10 : 14,
               ),
+              child: compact
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          selected ? Icons.check_circle : Icons.circle_outlined,
+                          color: selected ? Colors.white : PiumColors.navy,
+                          size: 24,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2,
+                            color: selected ? Colors.white : PiumColors.navy,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Icon(
+                          selected ? Icons.check_circle : Icons.circle_outlined,
+                          color: selected ? Colors.white : PiumColors.navy,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: selected ? Colors.white : PiumColors.navy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),

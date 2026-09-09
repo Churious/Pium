@@ -53,6 +53,21 @@ class SeniorJob {
   final String detailUrl;
   final String otherNotes;
 
+  /// 접수 마감·과거 공고 제외 (API가 마감 공고를 섞어 주므로 클라이언트에서도 한 번 더 거릅니다).
+  bool get isActive {
+    final status = acceptanceStatus.trim();
+    if (status == '마감') return false;
+
+    final end = _parseDisplayDate(acceptanceEndDate);
+    if (end != null) {
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+      if (end.isBefore(todayDate)) return false;
+    }
+
+    return status == '접수중' || status.isEmpty;
+  }
+
   bool get hasPhone => contactPhone.trim().isNotEmpty;
 
   bool get hasDetailUrl {
@@ -142,14 +157,14 @@ class SeniorJobSearchResult {
     required this.pageNo,
     required this.numOfRows,
     required this.totalCount,
+    this.hasMore = false,
   });
 
   final List<SeniorJob> jobs;
   final int pageNo;
   final int numOfRows;
   final int totalCount;
-
-  bool get hasMore => pageNo * numOfRows < totalCount;
+  final bool hasMore;
 
   factory SeniorJobSearchResult.fromJson(Map<String, dynamic> json) {
     final rawJobs = json['jobs'];
@@ -158,13 +173,22 @@ class SeniorJobSearchResult {
             .whereType<Map<String, dynamic>>()
             .map(SeniorJob.fromJson)
             .where((j) => j.jobId.isNotEmpty || j.title.isNotEmpty)
+            .where((j) => j.isActive)
             .toList()
         : <SeniorJob>[];
+    final pageNo = _int(json['pageNo'], 1);
+    final numOfRows = _int(json['numOfRows'], 10);
+    final hasMoreField = json['hasMore'];
+    final hasMore = hasMoreField is bool
+        ? hasMoreField
+        : pageNo * numOfRows < _int(json['totalCount'], jobs.length);
+
     return SeniorJobSearchResult(
       jobs: jobs,
-      pageNo: _int(json['pageNo'], 1),
-      numOfRows: _int(json['numOfRows'], 10),
+      pageNo: pageNo,
+      numOfRows: numOfRows,
       totalCount: _int(json['totalCount'], jobs.length),
+      hasMore: hasMore,
     );
   }
 
@@ -173,4 +197,14 @@ class SeniorJobSearchResult {
     if (value is String) return int.tryParse(value) ?? fallback;
     return fallback;
   }
+}
+
+DateTime? _parseDisplayDate(String raw) {
+  final digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.length < 8) return null;
+  final y = int.tryParse(digits.substring(0, 4));
+  final m = int.tryParse(digits.substring(4, 6));
+  final d = int.tryParse(digits.substring(6, 8));
+  if (y == null || m == null || d == null) return null;
+  return DateTime(y, m, d);
 }

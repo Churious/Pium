@@ -34,6 +34,80 @@ void main() {
     expect(job.summaryLine, contains('중구'));
   });
 
+  test('SeniorJob.isActive excludes closed and expired jobs', () {
+    const active = SeniorJob(
+      jobId: 'A',
+      title: '접수중 공고',
+      acceptanceStatus: '접수중',
+      acceptanceStartDate: '2026.09.01',
+      acceptanceEndDate: '2026.12.31',
+      workRegion: '공주시',
+      workAddress: '',
+      employmentType: '시간제일자리',
+      jobCategory: '',
+      acceptanceMethod: '',
+      acceptanceAgency: '',
+      workDescription: '',
+      recruitAge: '',
+      recruitCount: '',
+      contactName: '',
+      contactPhone: '',
+      detailUrl: '',
+      otherNotes: '',
+    );
+    const closed = SeniorJob(
+      jobId: 'B',
+      title: '마감 공고',
+      acceptanceStatus: '마감',
+      acceptanceStartDate: '2021.12.06',
+      acceptanceEndDate: '2021.12.20',
+      workRegion: '공주시',
+      workAddress: '',
+      employmentType: '기타',
+      jobCategory: '',
+      acceptanceMethod: '',
+      acceptanceAgency: '',
+      workDescription: '',
+      recruitAge: '',
+      recruitCount: '',
+      contactName: '',
+      contactPhone: '',
+      detailUrl: '',
+      otherNotes: '',
+    );
+
+    expect(active.isActive, isTrue);
+    expect(closed.isActive, isFalse);
+  });
+
+  test('SeniorJobSearchResult.fromJson filters inactive jobs', () {
+    final result = SeniorJobSearchResult.fromJson({
+      'jobs': [
+        {
+          'jobId': 'A',
+          'title': '접수중',
+          'acceptanceStatus': '접수중',
+          'acceptanceEndDate': '2099.12.31',
+          'workRegion': '공주시',
+        },
+        {
+          'jobId': 'B',
+          'title': '마감',
+          'acceptanceStatus': '마감',
+          'acceptanceEndDate': '2021.12.20',
+          'workRegion': '공주시',
+        },
+      ],
+      'pageNo': 1,
+      'numOfRows': 10,
+      'totalCount': 2,
+      'hasMore': false,
+    });
+
+    expect(result.jobs.length, 1);
+    expect(result.jobs.first.jobId, 'A');
+  });
+
   test('SeniorJobSearchResult.fromJson handles empty list', () {
     final result = SeniorJobSearchResult.fromJson({
       'jobs': [],

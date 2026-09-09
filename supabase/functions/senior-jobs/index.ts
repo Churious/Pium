@@ -7,6 +7,16 @@ const corsHeaders = {
 };
 
 const API_BASE = "https://apis.data.go.kr/B552474/SenuriService";
+const API_SCAN_PAGE_SIZE = 50;
+const MAX_API_SCAN_PAGES = 15;
+
+const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
+  CM0101: "정규직",
+  CM0102: "계약직",
+  CM0103: "시간제일자리",
+  CM0104: "일당직",
+  CM0105: "기타",
+};
 
 type SeniorJobsAction = "list" | "detail";
 
@@ -124,33 +134,26 @@ async function fetchJobListWithFallback(
   pageNo: number;
   numOfRows: number;
   totalCount: number;
+  hasMore: boolean;
 }> {
   const attempts: Array<{
-    pageNo: number;
-    numOfRows: number;
     search?: string;
     emplymShp?: string;
     workPlcNm?: string;
-  }> = [params];
+  }> = [{
+    search: params.search,
+    emplymShp: params.emplymShp,
+    workPlcNm: params.workPlcNm,
+  }];
 
-  const hasOptionalFilters = Boolean(
-    params.search || params.emplymShp || params.workPlcNm,
-  );
-  if (hasOptionalFilters) {
+  // 지역(workPlcNm)은 유지하고, 검색어·고용형태만 단계적으로 완화합니다.
+  if (params.search || params.emplymShp) {
     attempts.push({
-      pageNo: params.pageNo,
-      numOfRows: params.numOfRows,
       workPlcNm: params.workPlcNm,
       emplymShp: params.emplymShp,
     });
     attempts.push({
-      pageNo: params.pageNo,
-      numOfRows: params.numOfRows,
       workPlcNm: params.workPlcNm,
-    });
-    attempts.push({
-      pageNo: params.pageNo,
-      numOfRows: params.numOfRows,
     });
   }
 
@@ -158,7 +161,11 @@ async function fetchJobListWithFallback(
 
   for (const attempt of attempts) {
     try {
-      return await fetchJobList(apiKey, attempt);
+      return await fetchActiveJobList(apiKey, {
+        pageNo: params.pageNo,
+        numOfRows: params.numOfRows,
+        ...attempt,
+      });
     } catch (err) {
       if (err instanceof UpstreamError && err.kind === "auth") {
         lastAuthError = err;
@@ -170,6 +177,78 @@ async function fetchJobListWithFallback(
 
   if (lastAuthError) throw lastAuthError;
   throw new UpstreamError("Upstream API error", "upstream");
+}
+
+async function fetchActiveJobList(
+  apiKey: string,
+  params: {
+    pageNo: number;
+    numOfRows: number;
+    search?: string;
+    emplymShp?: string;
+    workPlcNm?: string;
+  },
+): Promise<{
+  jobs: SeniorJobJson[];
+  pageNo: number;
+  numOfRows: number;
+  totalCount: number;
+  hasMore: boolean;
+}> {
+  const skip = (params.pageNo - 1) * params.numOfRows;
+  const need = params.numOfRows;
+  const collected: SeniorJobJson[] = [];
+  let skipped = 0;
+  let apiPage = 1;
+  let exhausted = false;
+  let mightHaveMore = false;
+
+  while (apiPage <= MAX_API_SCAN_PAGES && collected.length < need) {
+    const batch = await fetchJobList(apiKey, {
+      pageNo: apiPage,
+      numOfRows: API_SCAN_PAGE_SIZE,
+      search: params.search,
+      emplymShp: params.emplymShp,
+      workPlcNm: params.workPlcNm,
+    });
+
+    const active = sortJobsByEndDate(
+      batch.jobs.filter((job) => isActiveJob(job)),
+    );
+
+    for (const job of active) {
+      if (skipped < skip) {
+        skipped++;
+        continue;
+      }
+      if (collected.length < need) {
+        collected.push(job);
+      } else {
+        mightHaveMore = true;
+        break;
+      }
+    }
+
+    if (batch.jobs.length < API_SCAN_PAGE_SIZE) {
+      exhausted = true;
+      break;
+    }
+    if (collected.length >= need) {
+      mightHaveMore = apiPage < MAX_API_SCAN_PAGES;
+      break;
+    }
+    apiPage++;
+  }
+
+  const hasMore = mightHaveMore || (!exhausted && collected.length === need);
+
+  return {
+    jobs: collected,
+    pageNo: params.pageNo,
+    numOfRows: params.numOfRows,
+    totalCount: skipped + collected.length + (hasMore ? 1 : 0),
+    hasMore,
+  };
 }
 
 async function fetchJobList(
@@ -382,6 +461,56 @@ function parseSingleItemFields(block: string): Record<string, string> {
   return fields;
 }
 
+function mapEmploymentType(item: Record<string, string>): string {
+  const name = item.emplymShpNm?.trim();
+  if (name) return name;
+  const code = item.emplymShp?.trim();
+  if (code && EMPLOYMENT_TYPE_LABELS[code]) {
+    return EMPLOYMENT_TYPE_LABELS[code];
+  }
+  return code ?? "";
+}
+
+function parseDisplayDate(raw?: string): Date | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 8) return null;
+  const y = Number(digits.slice(0, 4));
+  const m = Number(digits.slice(4, 6));
+  const d = Number(digits.slice(6, 8));
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+function todayKstDate(): Date {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return new Date(
+    Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()),
+  );
+}
+
+function isActiveJob(job: SeniorJobJson): boolean {
+  const status = job.acceptanceStatus.trim();
+  if (status === "마감") return false;
+
+  const end = parseDisplayDate(job.acceptanceEndDate);
+  if (end) {
+    const today = todayKstDate();
+    if (end < today) return false;
+  }
+
+  return status === "접수중" || status === "";
+}
+
+function sortJobsByEndDate(jobs: SeniorJobJson[]): SeniorJobJson[] {
+  return [...jobs].sort((a, b) => {
+    const aEnd = parseDisplayDate(a.acceptanceEndDate)?.getTime() ?? 0;
+    const bEnd = parseDisplayDate(b.acceptanceEndDate)?.getTime() ?? 0;
+    return bEnd - aEnd;
+  });
+}
+
 function mapListItemToJob(item: Record<string, string>): SeniorJobJson {
   return {
     jobId: item.jobId ?? "",
@@ -391,7 +520,7 @@ function mapListItemToJob(item: Record<string, string>): SeniorJobJson {
     acceptanceEndDate: formatApiDate(item.toDd),
     workRegion: item.workPlcNm ?? "",
     workAddress: "",
-    employmentType: item.emplymShpNm ?? "",
+    employmentType: mapEmploymentType(item),
     jobCategory: item.jobclsNm ?? "",
     acceptanceMethod: item.acptMthd ?? "",
     acceptanceAgency: item.oranNm || item.stmNm || "",
@@ -415,7 +544,7 @@ function mapDetailItemToJob(item: Record<string, string>): SeniorJobJson {
     acceptanceEndDate: formatApiDate(item.toAcptDd ?? item.toDd),
     workRegion: item.workPlcNm ?? "",
     workAddress: item.plDetAddr ?? "",
-    employmentType: item.emplymShpNm ?? "",
+    employmentType: mapEmploymentType(item),
     jobCategory: item.jobclsNm ?? "",
     acceptanceMethod: item.acptMthd ?? item.acptMthdCd ?? "",
     acceptanceAgency: item.plbizNm ?? item.oranNm ?? item.stmNm ?? "",

@@ -3,6 +3,28 @@
 class UserMessages {
   UserMessages._();
 
+  // 홈
+  static const homeBrand = '피움';
+  static const homeWeather = '24°';
+  static const homeAiTitle = '무엇을 도와드릴까요?';
+  static const homeAiSubtitle = '어려운 일을 말로 물어보세요.';
+  static const homeAiButton = '말로 질문하기';
+  static const homeAiExampleLabel = '예시';
+  static const homeAiExample = '키오스크 주문을 연습하고 싶어요';
+  static const homeListening = '듣고 있어요...';
+  static const homeFrequentTitle = '자주 쓰는 기능';
+  static const homeAllFeatures = '전체 기능 보기';
+  static const homeEmergencyTitle = '긴급할 때';
+  static const homeHospitalTitle = '병원·약국';
+  static const homeHospitalSubtitle = '가까운 병원과 약국을 찾아요';
+  static const homeFamilyTitle = '가족 연락';
+  static const homeFamilySubtitle = '등록한 가족에게 바로 전화해요';
+  static const homePracticeTitle = '디지털 연습';
+  static const homePracticeSubtitle = '키오스크와 스마트폰 사용을 연습해요';
+  static const homeJobsTitle = '일자리 찾기';
+  static const homeJobsSubtitle = '나에게 맞는 일자리를 찾아요';
+  static const homeSosTitle = '119 전화하기';
+
   // 병원/약국 검색
   static const hospitalSearchFailed =
       '병원 정보를 불러오지 못했어요. 인터넷 연결을 확인한 뒤 다시 눌러주세요.';
